@@ -2,7 +2,7 @@ pragma solidity ^0.4.8;
 
 contract Remittance{
     
-    struct PayerStruct
+    struct payerStruct
     {
         uint amount;
         bytes32 hashedPasswords;
@@ -15,7 +15,7 @@ contract Remittance{
     address public owner;
     
     //holds the mappings of payers
-    mapping(address => PayerStruct) payers;
+    mapping(address => payerStruct) payers;
     
     //holds list of Payers address array
     address[] public listOfPayers;
@@ -48,7 +48,7 @@ contract Remittance{
     
     //Set a deposit for payment method
     function depositFundsForPayment
-    (bytes32 fundsPassword,bytes32 recevierPassword,address receiverAdd)
+    (bytes32 fundsPasswordHashed,bytes32 recevierPasswordHashed,address receiverAdd)
     public
     payable
     returns (bool)
@@ -57,8 +57,8 @@ contract Remittance{
        require (msg.value >0 );
        require (msg.sender != receiverAdd );
        
-       //hash the passwords
-       var passHash = keccak256(recevierPassword,fundsPassword);
+       //hash the passwords in order to keep only a single hash in the contract
+       var passHash = keccak256(recevierPasswordHashed,fundsPasswordHashed);
        
        //set the values
        payers[msg.sender].amount += msg.value;
@@ -86,7 +86,10 @@ contract Remittance{
         //check conditions
         require (listOfPayers.length >0);
         
-        var hashPass = keccak256(recevierPassword,fundsPassword);
+        //Create the single hash expected in the contract's storage
+        var fundHash = keccak256(fundsPassword);
+        var recevierHash = keccak256(recevierPassword);
+        var hashPass = keccak256(recevierHash,fundHash);
         
         //find the passwords location in the mapping
         uint i = 0;
@@ -115,19 +118,19 @@ contract Remittance{
             
              //pay commition to the owner
             if(!msg.sender.send(payer.ownerCut))
-            throw;
+            revert(); //revert the entire process
             LogOnCommitionCharge(owner,payer.ownerCut);
             
             var remainingFunds = payer.amount - commition - payer.ownerCut;
             
             //send the funds
           if(!payer.recevierAddress.send(remainingFunds))
-            throw;
+            revert(); //revert the entire process
           else
           {
               LogOnWithdrawal(payer.recevierAddress,remainingFunds);
              if(!initPayerMapping(listOfPayers[i]))
-             throw;
+             revert(); //revert the entire process
               
           }
         }
