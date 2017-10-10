@@ -33,6 +33,10 @@ Dapp possible implementation
 ============================
 4. Dapp that will display the data of the campaign or a Dapp that will display the bidding system at any given time
 
+Hub
+============================
+ Add a "factory" / "hub" that can deploy instances of the contract as needed.
+
 
 
 
