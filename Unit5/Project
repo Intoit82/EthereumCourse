@@ -1,0 +1,44 @@
+Advertiser - Publisher location based blockchain
+
+Bidding system
+==============
+
+1. Creating a bidding system within the blockchain between advertisers and publisher per location.
+
+  a. The Advertiser will issue a contract which include:
+   * location
+   * Maximum payment
+   * Duration of the campaign
+   * Time limit for the contract in the blockchain
+
+  b. Publishers will issue offers for publish the campaign according to the advertiser terms with their own bid.
+     (must be lower or equal to the maximum payment)
+
+  c. The contract will settle the connection between the advertiser
+     and the lowest bid for creating the campagin. 
+
+  d. The contract should handle more than 1 advertiser per location - giving priority for the highest payment at any given time.
+
+
+Ad Campaign implementation
+==========================
+
+2. Once the advertiser and the publisher are connected by their own unique ids - the advertisers can place their own content of data
+   for example a picture in a contract so only the connected publisher can publish the campaign using the advertiser's data.
+
+3. The Publisher than communicate to the advertiser using the blockchain that the campaign was published successfully or has failed.
+
+
+Dapp possible implementation
+============================
+4. Dapp that will display the data of the campaign or a Dapp that will display the bidding system at any given time
+
+
+
+
+
+
+
+
+
+  
