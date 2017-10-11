@@ -16,10 +16,16 @@ contract AdvertismentCampaign{
     }
     
     //Describes the campaigns which exist at any given time
-    mapping(address => CampaignProperties[]) public campaigns;
+    mapping(address => CampaignProperties[]) campaigns;
     
     //holds the campaigns addresses for interation
     address[] campaignsAddress;
+    
+    //Log events
+    event LogNewAdCampaign(address sender, int setLatitude,int setLongitude, uint setDurationInMinutes,uint setOfferDuration,uint setMaxBidOffer);
+    event LogUpdateAdCampaign(address sender, int setLatitude,int setLongitude, uint setDurationInMinutes,uint setOfferDuration,uint setMaxBidOffer);
+    event LogStopCamgain(address sender, int setLatitude,int setLongitude);
+    
     
     //Constructor which saves the owner address
     function AdvertismentCampaign() 
@@ -72,11 +78,12 @@ contract AdvertismentCampaign{
         newCampaign.offerDuration = now + setOfferDuration; //add the offer durtion for the current time
         newCampaign.maxBidOffer = setMaxBidOffer;
         
-        //TODO log the creation
-        
         //add the campaign to the collection
         campaigns[msg.sender].push(newCampaign);
         campaignsAddress.push(msg.sender);
+        
+        //log the event
+        LogNewAdCampaign(msg.sender, setLatitude, setLongitude,setDurationInMinutes,setOfferDuration,setMaxBidOffer);
         
         return true;
         
@@ -98,9 +105,8 @@ contract AdvertismentCampaign{
         campaigns[msg.sender][campaignArrayLocation].offerDuration = now + newOfferDuration; //add the offer durtion for the current time;
         campaigns[msg.sender][campaignArrayLocation].maxBidOffer = newMaxBidOffer;
         
-        //TODO log the update
-        
-    
+        //log the update
+        LogUpdateAdCampaign(msg.sender, currentLatitude, currentLongitude, newDurationInMinutes, newOfferDuration, newMaxBidOffer);
         
         return true;
         
@@ -120,9 +126,10 @@ contract AdvertismentCampaign{
         //stops the campaign
         campaigns[msg.sender][campaignArrayLocation].offerDuration = now - 1;
         
-        return true;
+        //log the stop
+        LogStopCamgain(msg.sender,int currentLatitude,int currentLongitude);
         
-        //TODO log the stop
+        return true;
         
     }
     
