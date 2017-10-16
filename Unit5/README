@@ -36,13 +36,3 @@ Dapp possible implementation
 Hub
 ============================
  Add a "factory" / "hub" that can deploy instances of the contract as needed.
-
-
-
-
-
-
-
-
-
-  
