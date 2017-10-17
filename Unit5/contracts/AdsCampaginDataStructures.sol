@@ -5,6 +5,12 @@ pragma solidity ^0.4.8;
 //Describes a the shared data structure for the campaign
 contract AdsCampainDataStructures 
 {
+    
+    //Describes the campaigns which exist at any given time
+    //Every key in bytes32 will point to the CampaignProperties 
+    mapping(bytes32 => campaignProperties) internal campaigns;
+    
+    
     //a single campaign properties
     struct campaignProperties 
     {
@@ -23,5 +29,7 @@ contract AdsCampainDataStructures
         int latitude; // location axis - latitude 
         int longitude; // location axos - longitude
     }
+    
+    
 
 }

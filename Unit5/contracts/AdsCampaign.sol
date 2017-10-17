@@ -28,6 +28,18 @@ contract AdsCampaign is AdsCampaignFunding
               campaigns[key].offerDuration,campaigns[key].pricePerAd,campaigns[key].contentLink);
     }
     
+     //Gets the campagin properties
+    function getCampaignPropertiesByKey(bytes32 key)
+    constant
+    public
+    returns (bool isActive, uint balance, uint setDurationInMinutes,uint pricePerAd)
+    {
+       //check if the campaigns really active
+       var isReallyActive = campaigns[key].offerDuration > now && campaigns[key].isActive;
+       return (isReallyActive,campaigns[key].balance,campaigns[key].durationInMinutes
+             ,campaigns[key].pricePerAd);
+    }
+    
    
     
     /*Creates a new advertisment campaign
