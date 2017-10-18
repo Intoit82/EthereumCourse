@@ -1,10 +1,11 @@
 pragma solidity ^0.4.8;
 
-import "./AdsCampaignFunding.sol";
+import "./Runnable.sol";
+import "./AdsCampaignDataStructures.sol";
 
 //Describes a bidding system within the blockchain between advertisers and publisher per location.
-contract AdsCampaign is AdsCampaignFunding
-{
+contract AdsCampaign is Runnable, AdsCampaignDataStructures {
+
         
     //Log events
     event LogNewAdCampaign(address sender,uint id, int setLatitude,int setLongitude, uint setDurationInMinutes,uint setOfferDuration,uint pricePerAd,bytes32 contentLink);
@@ -12,10 +13,16 @@ contract AdsCampaign is AdsCampaignFunding
     event LogStopCamgain(address sender,uint id);
     event LogContractPauseSet(bool isPaused);
     
+    //Default constractor set the campagin creator as advertiser
+    function AdsCampaign(address registeredAdvertiserAddress)
+    {
+        advertiserAddress = registeredAdvertiserAddress;
+    }
     
     //Gets the campagin properties
     function getCampaignProperties(uint id)
     constant
+    isAdvertiser
     public
     returns (bool isActive, uint balance,  int setLatitude,int setLongitude,
             uint setDurationInMinutes,uint setOfferDuration,uint pricePerAd,bytes32 contentLink)
@@ -24,7 +31,7 @@ contract AdsCampaign is AdsCampaignFunding
        
        //check if the campaigns really active
        var isReallyActive = campaigns[key].offerDuration > now && campaigns[key].isActive;
-       return (isReallyActive,campaigns[key].balance,campaigns[key].location.latitude,campaigns[key].location.longitude,campaigns[key].durationInMinutes,
+       return (isReallyActive,campaigns[key].balance,campaigns[key].latitude,campaigns[key].longitude,campaigns[key].durationInMinutes,
               campaigns[key].offerDuration,campaigns[key].pricePerAd,campaigns[key].contentLink);
     }
     
@@ -52,7 +59,8 @@ contract AdsCampaign is AdsCampaignFunding
     function CreateNewAdvertimentCampaign(uint id,int setLatitude,int setLongitude,
     uint setDurationInMinutes,uint setOfferDuration,uint pricePerAd, bytes32 contentLink)
     public
-    notPaused()
+    isAdvertiser
+    running
     payable
     returns (bool)
     {
@@ -70,8 +78,8 @@ contract AdsCampaign is AdsCampaignFunding
         
         //create a new Campaign
         campaignProperties memory newCampaign;
-        newCampaign.location.latitude = setLatitude;
-        newCampaign.location.longitude = setLongitude;
+        newCampaign.latitude = setLatitude;
+        newCampaign.longitude = setLongitude;
         newCampaign.durationInMinutes = setDurationInMinutes;
         newCampaign.offerDuration = now + setOfferDuration; //add the offer durtion for the current time
         newCampaign.pricePerAd = pricePerAd;
@@ -91,7 +99,8 @@ contract AdsCampaign is AdsCampaignFunding
     //Update an existing advertisment campaign
     function updateExistingAdvertimentCampaign(uint id,int currentLatitude,int currentLongitude,uint newDurationInMinutes,uint newOfferDuration,uint pricePerAd)
     public
-    notPaused()
+    isAdvertiser
+    running
     campaignExist(id)
     returns (bool)
     {
@@ -116,7 +125,8 @@ contract AdsCampaign is AdsCampaignFunding
     //Stops an existing advertisment campaign
     function stopAdvertimentCampaign(uint id)
     public
-    notPaused()
+    isAdvertiser
+    running
     campaignExist(id)
     returns (bool)
     {
@@ -135,7 +145,7 @@ contract AdsCampaign is AdsCampaignFunding
     //Go over all campaigns and remove pass due campaigns
     function disablePassDueCampaigns(bytes32 campaignKey)
     isOwner()
-    notPaused()
+    running
     public
     returns (bool)
     {
