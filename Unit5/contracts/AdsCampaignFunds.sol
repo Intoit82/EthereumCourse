@@ -1,13 +1,13 @@
 pragma solidity ^0.4.8;
 
-import "./Paused.sol";
-import "./AdsCampainDataStructures.sol";
+import "./Runnable.sol";
+import "./AdsCampaignDataStructures.sol";
 
 //Todo handle gas? implement settles
 
 
 //Describes the funding process for each campaign
-contract AdsCampaignFunding is Paused, AdsCampainDataStructures {
+contract AdsCampaignFunding is Runnable, AdsCampaignDataStructures {
     
     //Describes the address and balances that were uncalimed and saved as vaults
     mapping(address => uint) public uncalimedFundsVault;
@@ -30,19 +30,13 @@ contract AdsCampaignFunding is Paused, AdsCampainDataStructures {
         _;
     }
 
-     //Is campaign exist modifier
-    modifier campaignExist(uint id)
-    {
-        bytes32 campaignKey = keccak256(msg.sender,id);
-        require(campaigns[campaignKey].isActive); //check for number of campaigns for the sender
-        _;
-    }
+  
 
      //Fund an active campaigns
     //The amount of invested funds in the campaign must be at least 1000 tokens
     function fundCampaign(uint id)
     public
-    notPaused()
+    running
     campaignExist(id) //check the campaignExist
     payable
     returns (bool)
@@ -63,7 +57,7 @@ contract AdsCampaignFunding is Paused, AdsCampainDataStructures {
      //Refund a Campaign
     function refundCampaign(uint id)
     canRefund(id)
-    notPaused()
+    running
     public
     returns (bool)
     {
@@ -84,7 +78,7 @@ contract AdsCampaignFunding is Paused, AdsCampainDataStructures {
     //Force Refund for a Campaign to vault - for future reterival
     function moveRefundToVault(uint id, address reciever)
     isOwner()
-    notPaused()
+    running
     canRefund(id)
     public
     returns (bool)
@@ -107,7 +101,7 @@ contract AdsCampaignFunding is Paused, AdsCampainDataStructures {
     
     //calim Refund form vault
     function claimFundFromVault()
-    notPaused()
+    running
     public
     returns (bool)
     {
@@ -128,5 +122,4 @@ contract AdsCampaignFunding is Paused, AdsCampainDataStructures {
         
     }
 }
-
 
