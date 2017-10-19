@@ -1,13 +1,11 @@
 pragma solidity ^0.4.8;
 
-import "./AdsCampaignDataStructures.sol";
-import "./Runnable.sol";
 
 //Defines the Ad view propeties and functionality for the blockchain
-contract TrustedViews is AdsCampaignDataStructures , Runnable
+contract TrustedViews 
 {
     
-       //a single view properties
+    //a single view properties
     struct viewProperties 
     {
         int latitude;//location of the view
@@ -22,26 +20,32 @@ contract TrustedViews is AdsCampaignDataStructures , Runnable
     //The key is the hash of both the publisher address and the campaign contract address
     mapping (bytes32 => viewProperties) public views;
     
-    //Holds the trusted uploaders for current views
-    mapping (address => bool) public trustedUploaders;
     
      //Holds the balances for the publishers
     mapping(bytes32 => uint) public publisherBalances;
-    
-    //Check for trusted uploader
-    modifier isTrustedUploader()
-    {
-        require(trustedUploaders[msg.sender] == true);
-        _;
-    }
     
     //log events
     event OnUpdateView(address publisherAddress,address adCampaginAddress,uint numberOfViews,uint setMinDuration);
     event OnAccessRightChange(address uploaderAddress,bool isAllowed);
     event OnNewViewUpload(address publisherAddress,address adCampaginAddress,int setLatitude,int setLongitude,
                           uint numberOfViews,uint setMinDuration);
+                          
+                          
+    //Allow anyone to check the number of views from a given publisher to a given campaign
+    function getNumberOfViews(address publisher)
+    constant
+    public
+    returns (uint)
+    {
+        var key = keccak256(publisher,this);
+        
+        //check the view exist
+        require(views[key].exist);
+        
+        return views[key].numberOfViews;
+    }
           
-    
+    /*
     //sets Access rights
     function setAccess(address uploaderAddress, bool allowed)
     public
@@ -59,41 +63,13 @@ contract TrustedViews is AdsCampaignDataStructures , Runnable
         return true;
     }
     
-    //Upload to the blockchain new view data
-    function uploadNewViews(address publisherAddress,int setLatitude,int setLongitude,
-    uint numberOfViews,uint setMinDuration,address setCampaignAddress)
-    isTrustedUploader
-    running
-    public
-    returns (bool)
-    {
-       
-        //check for valid imputs
-        require(numberOfViews >0);
-        require(setMinDuration >0);
-        
-         //create a unique key for the views
-        var key = keccak256(publisherAddress,setCampaignAddress);
-       
-        //set new values for the view
-        views[key].latitude = setLatitude;
-        views[key].longitude = setLongitude;
-        views[key].minViewDuration = setMinDuration;
-        views[key].numberOfViews = numberOfViews;
-        views[key].exist = true;
-        
-        //log
-        OnNewViewUpload(publisherAddress,setCampaignAddress,setLatitude,setLongitude,
-                        numberOfViews,setMinDuration);
-        
-        return true;
-    }
+    
     
     
     //Update an existing views collection
     function updateExistingViews(address publisherAddress,uint numberOfViews,uint setMinDuration
                                  ,address setCampaignAddress)
-    isTrustedUploader
+    isTrusteeRegistered
     running
     public
     returns (bool)
@@ -121,6 +97,6 @@ contract TrustedViews is AdsCampaignDataStructures , Runnable
         
     }
     
-    
+    */
     
 }
