@@ -13,6 +13,7 @@ contract Runnable is Owned{
     
     //constructor set running 
     function Runnable()
+    public
     {
         isRunning = true;
     }
@@ -25,12 +26,12 @@ contract Runnable is Owned{
     }
 
      //Pause the contract for Security\functionality checks
-    function setRunning(bool setRunning)
+    function setRunning(bool run)
     public
     returns (bool)
     {
         //set pause
-        isRunning = setRunning;
+        isRunning = run;
         
         //log
         LogContractPauseSet(msg.sender, isRunning);
