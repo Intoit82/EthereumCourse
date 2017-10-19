@@ -11,7 +11,7 @@ contract AdsCampaignDataStructures
     {
         int latitude; // location axis - latitude 
         int longitude; // location axos - longitude
-        uint durationInMinutes;  // maximum duration of the campaign in Minutes if accepted
+        uint viewDuration;  // maximum duration of the campaign in Minutes if accepted
         uint offerDuration; //maximum duration of the offer in the decenterlized bidding system
         uint pricePerAd; //defines the payment in tokens per a signle ad view
         bool isActive; //flag that indicates whether the comapaign is active
@@ -23,8 +23,7 @@ contract AdsCampaignDataStructures
     //Every key in bytes32 will point to the CampaignProperties 
     mapping(bytes32 => campaignProperties) public campaigns;
     
-    //Holds the advertiser address - creator of the the Ads campaign 
-    address public advertiserAddress;
+  
     
     //Is campaign exist modifier
     modifier campaignExist(uint id)
@@ -34,13 +33,7 @@ contract AdsCampaignDataStructures
         _;
     }
     
-    //Is this the advertiser
-    modifier isAdvertiser()
-    {
-        require(msg.sender == advertiserAddress); 
-        _;
-    }
-    
+ 
   
     
     
