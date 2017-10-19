@@ -1,10 +1,9 @@
 pragma solidity ^0.4.8;
 
-import "./Runnable.sol";
-import "./AdsCampaignDataStructures.sol";
+import "./AdsCampaignFundable.sol";
 
 //Describes a bidding system within the blockchain between advertisers and publisher per location.
-contract AdsCampaign is Runnable, AdsCampaignDataStructures {
+contract AdvertiserCampaigns is AdsCampaignFundable {
 
         
     //Log events
@@ -13,8 +12,20 @@ contract AdsCampaign is Runnable, AdsCampaignDataStructures {
     event LogStopCamgain(address sender,uint id);
     event LogContractPauseSet(bool isPaused);
     
+    //Holds the advertiser address - creator of the the Ads campaign 
+    address public advertiserAddress;
+     
+    //Is this the advertiser
+    modifier isAdvertiser()
+    {
+        require(msg.sender == advertiserAddress); 
+        _;
+    }
+    
+    
     //Default constractor set the campagin creator as advertiser
-    function AdsCampaign(address registeredAdvertiserAddress)
+    function AdvertiserCampaigns(address registeredAdvertiserAddress)
+    public
     {
         advertiserAddress = registeredAdvertiserAddress;
     }
@@ -31,7 +42,7 @@ contract AdsCampaign is Runnable, AdsCampaignDataStructures {
        
        //check if the campaigns really active
        var isReallyActive = campaigns[key].offerDuration > now && campaigns[key].isActive;
-       return (isReallyActive,campaigns[key].balance,campaigns[key].latitude,campaigns[key].longitude,campaigns[key].durationInMinutes,
+       return (isReallyActive,campaigns[key].balance,campaigns[key].latitude,campaigns[key].longitude,campaigns[key].viewDuration,
               campaigns[key].offerDuration,campaigns[key].pricePerAd,campaigns[key].contentLink);
     }
     
@@ -43,7 +54,7 @@ contract AdsCampaign is Runnable, AdsCampaignDataStructures {
     {
        //check if the campaigns really active
        var isReallyActive = campaigns[key].offerDuration > now && campaigns[key].isActive;
-       return (isReallyActive,campaigns[key].balance,campaigns[key].durationInMinutes
+       return (isReallyActive,campaigns[key].balance,campaigns[key].viewDuration
              ,campaigns[key].pricePerAd);
     }
     
@@ -57,7 +68,7 @@ contract AdsCampaign is Runnable, AdsCampaignDataStructures {
     duration of offer to the publisher should be at least 50 seconds
     */
     function CreateNewAdvertimentCampaign(uint id,int setLatitude,int setLongitude,
-    uint setDurationInMinutes,uint setOfferDuration,uint pricePerAd, bytes32 contentLink)
+    uint setViewDuration,uint setOfferDuration,uint pricePerAd, bytes32 contentLink)
     public
     isAdvertiser
     running
@@ -71,7 +82,7 @@ contract AdsCampaign is Runnable, AdsCampaignDataStructures {
         require(!campaigns[campaignKey].isActive);
         
         //check inputs
-        require(setDurationInMinutes >= 50); //check for a valid duration
+        require(setViewDuration >= 50); //check for a valid duration
         require(setOfferDuration >= 50); //check for a valid duration
         require(pricePerAd > 0); //check for a valid maxBidOffer
         
@@ -80,7 +91,7 @@ contract AdsCampaign is Runnable, AdsCampaignDataStructures {
         campaignProperties memory newCampaign;
         newCampaign.latitude = setLatitude;
         newCampaign.longitude = setLongitude;
-        newCampaign.durationInMinutes = setDurationInMinutes;
+        newCampaign.viewDuration = setViewDuration;
         newCampaign.offerDuration = now + setOfferDuration; //add the offer durtion for the current time
         newCampaign.pricePerAd = pricePerAd;
         newCampaign.isActive = true;
@@ -90,38 +101,39 @@ contract AdsCampaign is Runnable, AdsCampaignDataStructures {
         campaigns[campaignKey] = newCampaign;
         
         //log the event
-        LogNewAdCampaign(msg.sender,id, setLatitude, setLongitude,setDurationInMinutes,setOfferDuration,pricePerAd,contentLink);
+        LogNewAdCampaign(msg.sender,id, setLatitude, setLongitude,setViewDuration,setOfferDuration,pricePerAd,contentLink);
         
         return true;
         
     }
     
     //Update an existing advertisment campaign
-    function updateExistingAdvertimentCampaign(uint id,int currentLatitude,int currentLongitude,uint newDurationInMinutes,uint newOfferDuration,uint pricePerAd)
+    function updateExistingAdvertimentCampaign(uint id,int currentLatitude,int currentLongitude,uint newViewDuration,uint newOfferDuration,uint pricePerAd)
     public
     isAdvertiser
     running
     campaignExist(id)
     returns (bool)
     {
-        require(newDurationInMinutes > 50); //check for a valid duration
+        require(newViewDuration > 50); //check for a valid duration
         require(newOfferDuration > 50); //check for a valid duration
         require(pricePerAd > 0); //check for a valid maxBidOffer
         
         var campaignKey = keccak256(msg.sender, id);
         
         //update the campaign
-        campaigns[campaignKey].durationInMinutes = newDurationInMinutes;
+        campaigns[campaignKey].viewDuration = newViewDuration;
         campaigns[campaignKey].offerDuration = now + newOfferDuration; //add the offer durtion for the current time;
         campaigns[campaignKey].pricePerAd = pricePerAd;
         
         //log the update
-        LogUpdateAdCampaign(msg.sender,id, currentLatitude, currentLongitude, newDurationInMinutes, newOfferDuration, pricePerAd);
+        LogUpdateAdCampaign(msg.sender,id, currentLatitude, currentLongitude, newViewDuration, newOfferDuration, pricePerAd);
         
         return true;
         
     }
     
+    /* TODO needs to implement Pause mode for the campaign
     //Stops an existing advertisment campaign
     function stopAdvertimentCampaign(uint id)
     public
@@ -140,7 +152,7 @@ contract AdsCampaign is Runnable, AdsCampaignDataStructures {
         
         return true;
         
-    }
+    }*/
     
     //Go over all campaigns and remove pass due campaigns
     function disablePassDueCampaigns(bytes32 campaignKey)
