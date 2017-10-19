@@ -23,7 +23,6 @@ contract AdsCampaignDataStructures
     //Every key in bytes32 will point to the CampaignProperties 
     mapping(bytes32 => campaignProperties) public campaigns;
     
-  
     
     //Is campaign exist modifier
     modifier campaignExist(uint id)
