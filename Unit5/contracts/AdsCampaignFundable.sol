@@ -12,6 +12,9 @@ contract AdsCampaignFundable is Runnable, AdsCampaignDataStructures {
     //Describes the address and balances that were uncalimed and saved as vaults
     mapping(address => uint) public uncalimedFundsVault;
     
+    //Describes the address and balances for publishers with approved claims
+    mapping(address => uint) public publishersApprovedClaims;
+    
     //Log events
     event LogFundCampagin(address sender,uint id, uint amount);
     event LogRefundCampagin(address sender,uint id, uint amount);
@@ -31,7 +34,7 @@ contract AdsCampaignFundable is Runnable, AdsCampaignDataStructures {
     }
 
   
-
+    //TODO should restric funding?
      //Fund an active campaigns
     //The amount of invested funds in the campaign must be at least 1000 tokens
     function fundCampaign(uint id)
