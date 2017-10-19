@@ -7,7 +7,7 @@ import "./AdsCampaignDataStructures.sol";
 
 
 //Describes the funding process for each campaign
-contract AdsCampaignFunding is Runnable, AdsCampaignDataStructures {
+contract AdsCampaignFundable is Runnable, AdsCampaignDataStructures {
     
     //Describes the address and balances that were uncalimed and saved as vaults
     mapping(address => uint) public uncalimedFundsVault;
