@@ -1,41 +1,40 @@
 pragma solidity ^0.4.8;
 
-import "./AdvertiserCampaigns.sol";
-import "./PublisherViews.sol";
+import "./AdsCampaign.sol";
 import "./TrustedViews.sol";
+import "./RegisterAllParties.sol";
 
 
 //Describes Hub system for creating Ads campagin
-contract AdsHub is Runnable, AdsCampaignDataStructures {
+contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
     
-    //Holds the mapping for the created advertisers
-    mapping(address => bool) public registeredAdvertisers;
-    
-    //Holds the mapping for the created publishers
-    mapping(address => bool) public registeredPublishers;
-
     //Maps the advertiser to its campagin
     mapping (address => address) public runningCampagins;
     
     //Maps the publisher to its views
     mapping (address => address) public runningViews;
     
-    //Holds the views contract
-    TrustedViews public views;
+    //Map the active campagins
+    mapping (address => bool) public activeCampaigns;
     
     //Logs
-    event LogAdvertiserRegisteration(address advertiserAddress,address contractAddress);
-    event LogPublisherRegisteration(address publisherAddress,address contractAddress);
-    event LogDoneCampaign(address CampaignAddress, bytes32 key);
-    event LogCreateTrustedView(address senser,address contractAddress);
+    event LogCreateCampaignsContract(address advertiser,address campaignAddress);
+    event LogAddCampaignsTrusee(address advertiser,address campaignAddress,address trusteeAddress);
     
+    modifier campaignAcitve(address campaignAddress)
+    {
+         //check campgain is active
+         require(activeCampaigns[campaignAddress] == true);
+         _;
+    }
+    /*
     //Constructor for creating new trusted view contract
     function AdsHub()
     public
     {
-        views = new TrustedViews(); //set the owner to be the uploader
-        LogCreateTrustedView(msg.sender,views); //log the creation
+    
     }
+    
     
     //Allow to set access rights for the views contract
     function setUploaderAccess(address trustedUploader,bool allowed)
@@ -49,68 +48,117 @@ contract AdsHub is Runnable, AdsCampaignDataStructures {
             
         return true;
        
-    }
+    }*/
  
-    //Is the advertiser registered
-    modifier isAdvertiserRegistered()
-    {
-       //check the advertiser is registered
-       require(registeredAdvertisers[msg.sender] == true);
-       _;
-    }
     
-    //Is the Publisher registered
-    modifier isPublisherRegistered()
-    {
-       //check the Publisher is registered
-       require(registeredPublishers[msg.sender] == true);
-       _;
-    }
- 
-    //Register new advertiser
-    function registerAdvertiser()
+    //Create campagin (for advertisers)
+    function createCampaignsContract() 
     running
+    isAdvertiserRegistered
     public
     returns(address campaginContractAddress)
     {
-        //check existing registeration
-        require(registeredAdvertisers[msg.sender] != true);
         
         //create new campagin contract
-        AdvertiserCampaigns trustedCampaign = new AdvertiserCampaigns(msg.sender);
+        AdsCampaign trustedCampaign = new AdsCampaign(msg.sender);
         
-        registeredAdvertisers[msg.sender] = true; //add to mapping
-        runningCampagins
-        [msg.sender] = trustedCampaign; //add trustedCampaign
+        runningCampagins[msg.sender] = trustedCampaign; //add trustedCampaign
+        activeCampaigns[trustedCampaign] = true; //set active campagin
+        //TODO implement deactivate campagins in another function
         
-        LogAdvertiserRegisteration(msg.sender,trustedCampaign); //log
+        LogCreateCampaignsContract(msg.sender,trustedCampaign); //log
         return trustedCampaign; 
         
     } 
     
-    //Register new publisher
-    function registerPublisher(address campaginAddress)
+    //Upload trusted views for a given campagin from a given publisher (for Trustees)
+    function uploadCampainViews(address publisherAddress,address campaignAddress,
+                                int setLatitude,int setLongitude, uint numberOfViews,uint setMinDuration)
     running
+    isTrusteeRegistered
+    campaignAcitve(campaignAddress)
     public
-    returns(address publisherContractAddress)
+    returns (bool)
     {
-        //check existing registeration
-        require(registeredPublishers[msg.sender] != true);
-        
-        //TODO is really trusted?
-        //create new publisher contract
-        PublisherViews trustedPublisher = new PublisherViews(msg.sender,campaginAddress);
-        
-        registeredPublishers[msg.sender] = true; //add to mapping
-        runningViews[msg.sender] = trustedPublisher;
-       
-       
-        LogPublisherRegisteration(msg.sender,trustedPublisher); //log
-        return trustedPublisher; 
-        
+            
+            //refer to the campagin contract
+            AdsCampaign trustedCampaign = AdsCampaign(campaignAddress);
+            
+            //upload the new views
+            if(trustedCampaign.uploadNewViews(publisherAddress,campaignAddress,  setLatitude, setLongitude,numberOfViews, setMinDuration))
+              return true;
+            
+            
     }
     
     
+    
+     //claim the views for the given campagin (for publishers)
+     //The publisher needs to generate the campaignKey from the hash of (advertiser address,campaginId)
+    function claimCampaignViews(address campaignAddress,bytes32 key)
+    running
+    isPublisherRegistered
+    campaignAcitve(campaignAddress)
+    public
+    returns (bool)
+    {
+        
+            //refer to the campagin contract
+            AdsCampaign trustedCampaign = AdsCampaign(campaignAddress);
+            
+            //upload the new views
+            if(trustedCampaign.claimViews(msg.sender,key))
+              return true;
+            
+            
+    }
+    
+    //Withdraw the apporved funds (for publishers)
+    function withdrawFunds(address campaignAddress)
+    running
+    isPublisherRegistered
+    campaignAcitve(campaignAddress)
+    public
+    returns (bool)
+    {
+        
+            //refer to the campagin contract
+            AdsCampaign trustedCampaign = AdsCampaign(campaignAddress);
+            
+            //upload the new views
+            if(trustedCampaign.withdrawFunds(msg.sender))
+              return true;
+            
+            
+    }
+    
+    /*
+    //Add Trusee campagin (for advertisers) - defines the Trusee that is allowed to upload valid, authenticated views to the campagin
+    function addTrusteeForCampaignsContract(address trusteeAddress)
+    running
+    isAdvertiserRegistered
+    public
+    returns(bool)
+    {
+        //check trustee is registered
+        require(registeredTrustees[trusteeAddress] == true); 
+        
+        //check this advertiser has a campagin contract running
+        require(runningCampagins[msg.sender] != address(0)); 
+        
+        //create new campagin contract
+        AdsCampaign trustedCampaign = AdsCampaign(runningCampagins[msg.sender]);
+        
+        trustedCampaign.addTrustee(trusteeAddress);
+        
+        LogAddCampaignsTrusee(msg.sender,trustedCampaign,trusteeAddress); //log
+        
+        return true; 
+        
+    } 
+    /*
+    
+    /*
     //disable done campaigns
     function disableDoneCampaigns(address campaignAddress, bytes32 key)
     isOwner
@@ -126,37 +174,7 @@ contract AdsHub is Runnable, AdsCampaignDataStructures {
         LogDoneCampaign(campaignAddress,key);
         return true;
     }
-    
-     //UnRegister By Owner
-    function unRegisterAdvertiser(address advertiserRegisteryAddress)
-    isOwner
-    running
-    public
-    returns (bool)
-    {
-        //check the advertiser is registered
-       require(registeredAdvertisers[advertiserRegisteryAddress] == true);
-       
-       //TODO check funds and active campaigns
-       
-       registeredAdvertisers[advertiserRegisteryAddress] = false; // remove campagin
-    }
-    
-      //UnRegister by Advetiser
-    function unRegisterAdvertiser()
-    isAdvertiserRegistered
-    running
-    public
-    returns (bool)
-    {
-      
-       
-       //TODO check funds and active campaigns
-       //TODO close the campaigns
-       //TODO do the same with Owner
-       
-       registeredAdvertisers[msg.sender] = false; // remove campagin
-    }
+    */
     
     
 }
