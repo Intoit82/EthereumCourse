@@ -14,7 +14,7 @@ contract AdsCampaign is AdsCampaignFundable, TrustedViews {
     event LogReducingClaimedAmount(address publisherAdd,address campaignAdd,uint calimAmount,uint approvedAmount);
     event LogApprovedClaim(address publisherAdd,address campaignAdd,uint approvedAmount);
     event LogWithdrawFunds(address publisherAdd,address campaignAdd,uint amount);
-    event LogContractPauseSet(bool isPaused);
+    event LogRemoveExpiredCampagin(address senderAdd,address campaignAdd,uint id);
     
     //Holds the advertiser address - creator of the the Ads campaign 
     address public advertiserAddress;
@@ -250,7 +250,33 @@ contract AdsCampaign is AdsCampaignFundable, TrustedViews {
     }
     
     
-    /* TODO needs to implement Pause mode for the campaign
+    //Go over all campaigns and remove pass due campaigns
+    function disablePassDueCampaigns(address advertiserAddress,uint id)
+    isOwner()
+    running
+    public
+    returns (bool)
+    {
+        var campaignKey = keccak256(advertiserAddress,id);
+        
+        //check that the campaign is not active or offering time is due
+        require(campaigns[campaignKey].isActive = false || campaigns[campaignKey].offerDuration < now);
+        
+        //Only clear campaigns which have no balances to continue or refund
+        require(campaigns[campaignKey].balance == 0);
+        
+        //disable the campaign
+        campaigns[campaignKey].isActive = false;
+        campaigns[campaignKey].offerDuration = now -1;
+        
+        //log
+        LogRemoveExpiredCampagin(msg.sender,advertiserAddress,id);
+        
+        return true;
+        
+    }
+    
+      /* TODO needs to implement Pause mode for the campaign
     //Stops an existing advertisment campaign
     function stopAdvertimentCampaign(uint id)
     public
@@ -270,27 +296,6 @@ contract AdsCampaign is AdsCampaignFundable, TrustedViews {
         return true;
         
     }*/
-    
-    //Go over all campaigns and remove pass due campaigns
-    function disablePassDueCampaigns(bytes32 campaignKey)
-    isOwner()
-    running
-    public
-    returns (bool)
-    {
-        //check that the campaign is not active or offering time is due
-        require(campaigns[campaignKey].isActive = false || campaigns[campaignKey].offerDuration > now);
-        
-        //Only clear campaigns which have no balances to continue or refund
-        require(campaigns[campaignKey].balance == 0);
-        
-        //disable the campaign
-        campaigns[campaignKey].isActive = false;
-        campaigns[campaignKey].offerDuration = now -1;
-        
-        return true;
-        
-    }
     
   
 }
