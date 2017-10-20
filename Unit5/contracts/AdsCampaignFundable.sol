@@ -26,7 +26,7 @@ contract AdsCampaignFundable is Runnable, AdsCampaignDataStructures {
     {
         bytes32 campaignKey = keccak256(msg.sender,id);
         //check that the campaign is not active or offering time is due
-        require(campaigns[campaignKey].isActive == false || campaigns[campaignKey].offerDuration > now);
+        require(campaigns[campaignKey].isActive == false || campaigns[campaignKey].offerDuration < now);
         
         //require balance to exist
         require(campaigns[campaignKey].balance > 0);
