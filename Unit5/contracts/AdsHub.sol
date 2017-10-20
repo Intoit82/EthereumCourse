@@ -19,7 +19,10 @@ contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
     
     //Logs
     event LogCreateCampaignsContract(address advertiser,address campaignAddress);
-    event LogAddCampaignsTrusee(address advertiser,address campaignAddress,address trusteeAddress);
+    event LogUploadViews(address truseeAdd,address campaignAddress,uint numberOfViews);
+    event LogClaimViews(address publisher,address campaignAddress,uint numberOfViews);
+    event LogWithdrawApprovedFunds(address publisher,address campaignAddress);
+    
     
     modifier campaignAcitve(address campaignAddress)
     {
@@ -27,30 +30,8 @@ contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
          require(activeCampaigns[campaignAddress] == true);
          _;
     }
-    /*
-    //Constructor for creating new trusted view contract
-    function AdsHub()
-    public
-    {
-    
-    }
-    
-    
-    //Allow to set access rights for the views contract
-    function setUploaderAccess(address trustedUploader,bool allowed)
-    running
-    isOwner
-    public 
-    returns(bool)
-    {
-        if(!views.setAccess(trustedUploader,allowed))
-            return false;
-            
-        return true;
-       
-    }*/
- 
-    
+  
+
     //Create campagin (for advertisers)
     function createCampaignsContract() 
     running
@@ -86,7 +67,11 @@ contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
             
             //upload the new views
             if(trustedCampaign.uploadNewViews(publisherAddress,campaignAddress,  setLatitude, setLongitude,numberOfViews, setMinDuration))
+            {
+              //log
+              LogUploadViews(address truseeAdd,address campaignAddress,uint numberOfViews);
               return true;
+            }
             
             
     }
@@ -108,7 +93,12 @@ contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
             
             //upload the new views
             if(trustedCampaign.claimViews(msg.sender,key))
-              return true;
+            {
+                //log
+                LogClaimViews(msg.sender,campaignAddress)
+                return true;
+            }
+              
             
             
     }
@@ -127,36 +117,17 @@ contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
             
             //upload the new views
             if(trustedCampaign.withdrawFunds(msg.sender))
-              return true;
+            {
+                //log
+                LogWithdrawApprovedFunds(msg.sender,campaignAddress);
+                return true;
+            }
+              
             
             
     }
-    
-    /*
-    //Add Trusee campagin (for advertisers) - defines the Trusee that is allowed to upload valid, authenticated views to the campagin
-    function addTrusteeForCampaignsContract(address trusteeAddress)
-    running
-    isAdvertiserRegistered
-    public
-    returns(bool)
-    {
-        //check trustee is registered
-        require(registeredTrustees[trusteeAddress] == true); 
-        
-        //check this advertiser has a campagin contract running
-        require(runningCampagins[msg.sender] != address(0)); 
-        
-        //create new campagin contract
-        AdsCampaign trustedCampaign = AdsCampaign(runningCampagins[msg.sender]);
-        
-        trustedCampaign.addTrustee(trusteeAddress);
-        
-        LogAddCampaignsTrusee(msg.sender,trustedCampaign,trusteeAddress); //log
-        
-        return true; 
-        
-    } 
-    /*
+   
+  
     
     /*
     //disable done campaigns
