@@ -20,7 +20,7 @@ contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
     //Logs
     event LogCreateCampaignsContract(address advertiser,address campaignAddress);
     event LogUploadViews(address truseeAdd,address campaignAddress,uint numberOfViews);
-    event LogClaimViews(address publisher,address campaignAddress,uint numberOfViews);
+    event LogClaimViews(address publisher,address campaignAddress);
     event LogWithdrawApprovedFunds(address publisher,address campaignAddress);
     
     
@@ -69,7 +69,7 @@ contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
             if(trustedCampaign.uploadNewViews(publisherAddress,campaignAddress,  setLatitude, setLongitude,numberOfViews, setMinDuration))
             {
               //log
-              LogUploadViews(address truseeAdd,address campaignAddress,uint numberOfViews);
+              LogUploadViews(msg.sender,campaignAddress,numberOfViews);
               return true;
             }
             
@@ -95,7 +95,7 @@ contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
             if(trustedCampaign.claimViews(msg.sender,key))
             {
                 //log
-                LogClaimViews(msg.sender,campaignAddress)
+                LogClaimViews(msg.sender,campaignAddress);
                 return true;
             }
               
