@@ -1,3 +1,33 @@
+const Web3 = require("web3");
+const Promise = require("bluebird");
+const truffleContract = require("truffle-contract");
+const $ = require("jquery");
+// Not to forget our built contract
+const HubJson = require("../../build/contracts/Hub.json");
+const CampaignJson = require("../../build/contracts/Campaign.json");
+
+// support Mist, and other wallets that provide 'web3'
+
+// Supports Mist, and other wallets that provide 'web3'.
+if (typeof web3 !== 'undefined') {
+  // Use the Mist/wallet/Metamask provider.
+  console.log("web3 is not undefined so using Mist");
+  window.web3 = new Web3(web3.currentProvider);
+} else {
+  // Your preferred fallback.
+  console.log("web3 is undefined so using the fallback.");
+  window.web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545')); 
+}
+
+Promise.promisifyAll(web3.eth, { suffix: "Promise"});
+Promise.promisifyAll(web3.version, { suffix: "Promise"});
+
+const Hub = truffleContract(HubJson);
+Hub.setProvider(web3.currentProvider);
+
+const Campaign = truffleContract(CampaignJson);
+Campaign.setProvider(web3.currentProvider);
+
 var app = angular.module('HubApp', []);
 
 app.config(function( $locationProvider) {
