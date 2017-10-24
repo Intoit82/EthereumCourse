@@ -51,7 +51,7 @@ contract('CreateAdsCampaignTest', function(accounts) {
     it("Should create a new campaign", function() {
         var campaignAddr;
         var campaignContract;
-        return Promise.all([() => adsHub.createCampaignsContract({from: advertiser})])
+        return Promise.all([() => adsHub.createCampaignsContract.call({from: advertiser})])
         //return adsHub.createCampaignsContract({from: advertiser})
               .then(addr =>
                  {  
