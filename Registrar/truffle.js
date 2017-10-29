@@ -1,8 +1,14 @@
 // Allows us to use ES6 in our migrations and tests.
-//require('babel-register')
+require('babel-register')
 
 module.exports = {
-  //build: "./node_modules/.bin/webpack",
+	build: "./node_modules/.bin/webpack",
+  //	deploy: [
+  //  "MyGlobalRegistrar"
+  //],
+  //after_deploy: [
+  //  "environments/development/deploy_and_register_url_hint.js"
+  //]
   networks: {
     development: {
       host: 'localhost',
