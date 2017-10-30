@@ -7,7 +7,7 @@ makeSureAreUnlocked = require("../utils/makeSureAreUnlocked.js");
 
 
 
-contract('CreateAdsCampaignTest', function(accounts) {
+contract('PermissionsTest', function(accounts) {
 
      //set addresses
     let owner, advertiser, publisher, trustee, observer;
