@@ -27,6 +27,7 @@ contract Runnable is Owned{
 
      //Pause the contract for Security\functionality checks
     function setRunning(bool run)
+    isOwner
     public
     returns (bool)
     {
