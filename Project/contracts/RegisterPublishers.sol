@@ -25,6 +25,10 @@ contract RegisterPublishers is Runnable {
     public
     returns(bool)
     {
+        //Action that should be done by the web portal
+        //Verify the identity of the party
+        //Collect relavent information for registeration
+        
         //check existing registeration
         require(registeredPublishers[msg.sender] != true);
         
@@ -37,15 +41,15 @@ contract RegisterPublishers is Runnable {
         
     } 
     
-     //UnRegister by Advetiser
-    function unregisterAdvertiser()
+     //UnRegister by Publisher
+    function unregisterPublisher()
     isPublisherRegistered
     running
     public
     returns (bool)
     {
       
-       
+       //Actions that should be done by the web portal
        //TODO check funds and active campaigns
        //TODO close the campaigns
        //TODO do the same with Owner
