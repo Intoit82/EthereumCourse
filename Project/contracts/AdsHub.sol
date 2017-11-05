@@ -8,33 +8,45 @@ import "./RegisterAllParties.sol";
 contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
     
     //Maps the advertiser to its campagin
-    mapping (address => address) public runningCampagins;
+    mapping (address => address) public AdvertiserCampaignsContractAddress;
     
     //Maps the publisher to its views
     mapping (address => address) public runningViews;
     
     //Map the active campagins
-    mapping (address => bool) public activeCampaigns;
+    mapping (address => bool) public existingCampaigns;
     
     //Logs
     event LogCreateCampaignsContract(address advertiser,address campaignAddress);
     event LogUploadViews(address truseeAdd,address campaignAddress,uint numberOfViews);
     event LogClaimViews(address publisher,address campaignAddress);
     event LogWithdrawApprovedFunds(address publisher,address campaignAddress);
+    event LogApproveStopCampaignRequest(address approveBy,address campaignAddress,address advertiserAddr,uint id);
     
     
-    modifier campaignAcitve(address campaignAddress)
+  
+    
+    modifier newAdvertiserCampaigns(address advertiser)
     {
-         //check campgain is active
-         require(activeCampaigns[campaignAddress] == true);
+         //check no running campagin exist
+         require(AdvertiserCampaignsContractAddress[msg.sender] == address(0));
          _;
     }
-  
+    
+    modifier campaignCreated (address _campaignAddress)
+    {
+         //check campgain is active
+         require(existingCampaigns[_campaignAddress] == true);
+         _;
+    }
+    
 
     //Create campagin (for advertisers)
     function createCampaignsContract() 
     running
     isAdvertiserRegistered
+    newAdvertiserCampaigns(msg.sender)
+    notInBlackList
     public
     returns(address campaginContractAddress)
     {
@@ -42,9 +54,8 @@ contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
         //create new campagin contract
         AdsCampaign trustedCampaign = new AdsCampaign(msg.sender);
         
-        runningCampagins[msg.sender] = trustedCampaign; //add trustedCampaign
-        activeCampaigns[trustedCampaign] = true; //set active campagin
-        //TODO implement deactivate campagins in another function
+        AdvertiserCampaignsContractAddress[msg.sender] = trustedCampaign; //add trustedCampaign
+        existingCampaigns[trustedCampaign] = true; //set active campagin
         
         LogCreateCampaignsContract(msg.sender,trustedCampaign); //log
         return trustedCampaign; 
@@ -56,7 +67,8 @@ contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
                                 int setLatitude,int setLongitude, uint numberOfViews,uint setMinDuration)
     running
     isTrusteeRegistered
-    campaignAcitve(campaignAddress)
+    campaignCreated(campaignAddress)
+    notInBlackList
     public
     returns (bool)
     {
@@ -82,7 +94,8 @@ contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
     function claimCampaignViews(address campaignAddress,bytes32 key)
     running
     isPublisherRegistered
-    campaignAcitve(campaignAddress)
+    campaignCreated(campaignAddress)
+    notInBlackList
     public
     returns (bool)
     {
@@ -106,7 +119,8 @@ contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
     function withdrawFunds(address campaignAddress)
     running
     isPublisherRegistered
-    campaignAcitve(campaignAddress)
+    campaignCreated(campaignAddress)
+    notInBlackList
     public
     returns (bool)
     {
@@ -125,26 +139,30 @@ contract AdsHub is RegisterAllParties, AdsCampaignDataStructures {
             
             
     }
-   
-  
     
-    /*
-    //disable done campaigns
-    function disableDoneCampaigns(address campaignAddress, bytes32 key)
+    //Approve a request to stop a single running campagin by the advertiser
+    function approveSingleCampaignStopRequest(address campaignAddress,address advertiserAddr,uint id)
     isOwner
     running
+    campaignCreated(campaignAddress)
     public
-    returns (bool)
+    returns(bool)
     {
-        AdvertiserCampaigns doneCampaign = AdvertiserCampaigns(campaignAddress);
-        if (!doneCampaign.disablePassDueCampaigns(key))
-           return false;
+            //refer to the campagin contract
+            AdsCampaign trustedCampaign = AdsCampaign(campaignAddress);
+            
+            //upload the new views
+            if(trustedCampaign.approveStopCampaignRequest(advertiserAddr,id))
+            {
+                //log
+                LogApproveStopCampaignRequest(msg.sender,campaignAddress,advertiserAddr,id);
+                return true;
+            }
         
-        //log the event
-        LogDoneCampaign(campaignAddress,key);
-        return true;
     }
-    */
-
+    
+    
+    
+ 
     
 }
