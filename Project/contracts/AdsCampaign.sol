@@ -10,7 +10,8 @@ contract AdsCampaign is AdsCampaignFundable, TrustedViews {
     //Log events
     event LogNewAdCampaign(address sender,uint id, int setLatitude,int setLongitude, uint setDurationInMinutes,uint setOfferDuration,uint pricePerAd,bytes32 contentLink);
     event LogUpdateAdCampaign(address sender,uint id, int setLatitude,int setLongitude, uint setDurationInMinutes,uint setOfferDuration,uint pricePerAd);
-    event LogStopCamgain(address sender,uint id);
+    event LogStopCampaginRequest(address sender,uint id);
+    event LogStopCampaginApproved(address approvalAddr,address advertiserAddressRequest, uint id);
     event LogReducingClaimedAmount(address publisherAdd,address campaignAdd,uint calimAmount,uint approvedAmount);
     event LogApprovedClaim(address publisherAdd,address campaignAdd,uint approvedAmount);
     event LogWithdrawFunds(address publisherAdd,address campaignAdd,uint amount);
@@ -18,6 +19,9 @@ contract AdsCampaign is AdsCampaignFundable, TrustedViews {
     
     //Holds the advertiser address - creator of the the Ads campaign 
     address public advertiserAddress;
+    
+    //Holds the requests for stopping an active campaign
+    mapping (bytes32 => bool) stopCampaignRequest;
     
     //Is this the advertiser
     modifier isAdvertiser()
@@ -248,16 +252,61 @@ contract AdsCampaign is AdsCampaignFundable, TrustedViews {
         return true;
         
     }
+   
     
+    //Stops an existing advertisment campaign
+    function requestToStopCampaign(uint id)
+    public
+    isAdvertiser
+    running
+    campaignExist(id)
+    returns (bool)
+    {
+        var campaignKey = keccak256(msg.sender,id);
+        
+        //stops the campaign
+        stopCampaignRequest[campaignKey] = true;
+       
+        //log the stop request
+        LogStopCampaginRequest(msg.sender,id);
+        
+        return true;
+    }
     
-    //Go over all campaigns and remove pass due campaigns
-    function disablePassDueCampaigns(address advertiserAddress,uint id)
-    isOwner()
+    //Stops an existing advertisment campaign
+    function approveStopCampaignRequest(address advertiserAddressRequest ,uint id)
+    public
+    isOwner
+    running
+    campaignExist(id)
+    returns (bool)
+    {
+       
+        var campaignKey = keccak256(advertiserAddressRequest,id);
+        
+         //verify request was submitted
+        require(stopCampaignRequest[campaignKey]);
+        
+        //stops the campaign
+        stopCampaignRequest[campaignKey] = false;
+        campaigns[campaignKey].isActive = false;
+       
+        //log the stop approval
+        LogStopCampaginApproved(msg.sender,advertiserAddressRequest,id);
+        
+        return true;
+    }
+        
+   
+   //Future implementation
+   /* //Go over all campaigns and remove pass due campaigns
+    function disablePassDueCampaigns(address advertiserAddressToDisable,uint id)
+    isOwner
     running
     public
     returns (bool)
     {
-        var campaignKey = keccak256(advertiserAddress,id);
+        var campaignKey = keccak256(advertiserAddressToDisable,id);
         
         //check that the campaign is not active or offering time is due
         require(campaigns[campaignKey].isActive = false || campaigns[campaignKey].offerDuration < now);
@@ -270,32 +319,11 @@ contract AdsCampaign is AdsCampaignFundable, TrustedViews {
         campaigns[campaignKey].offerDuration = now -1;
         
         //log
-        LogRemoveExpiredCampagin(msg.sender,advertiserAddress,id);
+        LogRemoveExpiredCampagin(msg.sender,advertiserAddressToDisable,id);
         
         return true;
         
-    }
-    
-      /* TODO needs to implement Pause mode for the campaign
-    //Stops an existing advertisment campaign
-    function stopAdvertimentCampaign(uint id)
-    public
-    isAdvertiser
-    running
-    campaignExist(id)
-    returns (bool)
-    {
-        var campaignKey = keccak256(msg.sender,id);
-        
-        //stops the campaign
-        campaigns[campaignKey].isActive = false;
-       
-        //log the stop
-        LogStopCamgain(msg.sender,id);
-        
-        return true;
-        
-    }*/
+    }*/ 
     
   
 }
