@@ -1,6 +1,6 @@
 import { Component } from 'react'
 import adsHubContract from '../build/contracts/AdsHub.json'
-//import adsCampaignContract from '../build/contracts/AdsCampaign.json'
+import adsCampaignContract from '../build/contracts/AdsCampaign.json'
 import getWeb3 from './utils/getWeb3'
 
 import './css/oswald.css'
@@ -37,19 +37,26 @@ createCampaign() {
      
         // Update state with the result.
         console.log("Result:" , result);
-       return this.adsHubInstance.createCampaignsContract({from: this.advertiserAddr})
-       //return this.adsHubInstance.createTry({from:this.advertiserAddr})
+       return this.adsHubInstance.createCampaignsContract({from: this.advertiserAddr, gas: 4000000})
       })
 	 
         .then(function(txObject){
 
-          /*  const event0 = txObject.logs[0];
-            console.log(event0.event);
-            console.log(event0.args.advertiser);
-            console.log(event0.args.campaignAddress);
-            console.log("Return value: ", txObject); */
-            console.log("returned value: ", txObject);
-         })
+            const event0 = txObject.logs[0];
+            console.log(event0.args.advertiser + " has created a new campaign at " + event0.args.campaignAddress);
+
+		   
+             
+
+           var campaignAddr = event0.args.campaignAddress;
+          //  return adsCampaign.at(campaignAddr,{from:this.advertiserAddr})
+     /* })
+        .then(instance => {
+        	var adsCampaignInstance = instance;
+
+        	//this.adsCampaignInstance = instance;
+        	 console.log("saving ads campaign instance") */
+        })
 }
 
 uploadViews() {
@@ -77,6 +84,9 @@ addEventListener(component) {
 instantiateContract(){
     const contract = require('truffle-contract')
     const adsHub = contract(adsHubContract)
+    const adsCampaign = contract(adsCampaignContract)
+    adsCampaign.setProvider(this.state.web3.currentProvider)
+    
     adsHub.setProvider(this.state.web3.currentProvider)
     
 
