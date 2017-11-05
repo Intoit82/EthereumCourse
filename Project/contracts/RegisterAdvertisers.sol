@@ -25,6 +25,10 @@ contract RegisterAdvertisers is Runnable {
     public
     returns(bool)
     {
+        //Action that should be done by the web portal
+        //Verify the identity of the party
+        //Collect relavent information for registeration
+        
         //check existing registeration
         require(registeredAdvertisers[msg.sender] != true);
         
@@ -45,7 +49,7 @@ contract RegisterAdvertisers is Runnable {
     returns (bool)
     {
       
-       
+       //Actions that should be done by the web portal
        //TODO check funds and active campaigns
        //TODO close the campaigns
        //TODO do the same with Owner
