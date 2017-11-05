@@ -8,7 +8,7 @@ import "./RegisterTrustees.sol";
 contract RegisterAllParties is RegisterAdvertisers, RegisterPublishers, RegisterTrustees  {
     
     //Holds the black list for party registration
-    mapping (address => bool) blackList;
+    mapping (address => bool) public blackList;
     
     event LogOnUpdateBlackList(address partyToUpdate, bool onOff);
     
@@ -27,7 +27,7 @@ contract RegisterAllParties is RegisterAdvertisers, RegisterPublishers, Register
     returns(bool)
     {
         //update party flag in blackList
-        blackList[party] != setOnOff;
+        blackList[party] = setOnOff;
         
         LogOnUpdateBlackList(party,setOnOff);
         

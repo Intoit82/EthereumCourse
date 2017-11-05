@@ -267,21 +267,68 @@ contract('PermissionsTest', function(accounts) {
          assert.isFalse(result,"Set running was allowed by the trustee");
          return adsHub.setRunning.call(false, {from:adsHub.address})
         })
+        .then(function(result){
+          console.log("constract was able to stop running");
+        })
 
         .catch(function(result){
          assert.isFalse(result,"Set running was allowed by the hub contract");
          return adsHub.setRunning.call(false, {from:owner});
         })
         .catch(function(error){ 
+          console.log("Owner was not abel to set running fuction");
           assert.isTrue(true,"Failed to owner publisher permissions");
         })
-        .then(function(result){
-         assert.isTrue(result,"Set running was not allowed by the owner");
-       });
-          
-    
+       
     });
 
+    it("Test black list denial", function() {
+    
+        var campaignAddr;
+        var adsCampaign;
+        var campaginKey;
+        
+        //add advertiser to black list
+        return adsHub.updatePartyInBlackList(advertiser,true,{from:owner})
+        .then(txObject => {
+          const event0 = txObject.logs[0];
+          assert.strictEqual(event0.args.partyToUpdate,advertiser,"Advertiser was not added to the black list");
+          assert.strictEqual(event0.args.onOff,true,"Failed adding to black list");
+          
+          //create campaign
+          return adsHub.createCampaignsContract({from:advertiser})
+        })
+        .then(function(txObject){
+          assert.isTrue(false,"Advertiser was able to create campaign contract although in black list");
+        })
+
+        .catch(error => {
+          console.log("Advertiser in blacklist and was blocked as expected");
+          return adsHub.updatePartyInBlackList(advertiser,false,{from:owner});
+        })
+          .then(txObject => {
+          const event0 = txObject.logs[0];
+          assert.strictEqual(event0.args.onOff,false,"Advertiser was not removed from the black list");         
+          console.log("Advertiser was removed from black list");
+          
+          return adsHub.blackList.call(advertiser,{from:owner});
+        })
+
+          .then(result => {
+            console.log("Is advertiser in black list: ", result);
+            assert.isFalse(result,"Advertiser should not be in the black list");
+            //create campaign
+            return adsHub.createCampaignsContract({from:advertiser})
+            
+        })
+
+        .then(txObject => {
+          const event0 = txObject.logs[0];
+          assert.strictEqual(event0.args.advertiser,advertiser,"Advertiser was not able to interact with contract after being removed from black list");         
+          console.log("Campaign contract cration was successfull");
+        })
+
+  }); 
 });
 
     
