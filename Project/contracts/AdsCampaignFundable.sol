@@ -9,8 +9,15 @@ import "./AdsCampaignDataStructures.sol";
 //Describes the funding process for each campaign
 contract AdsCampaignFundable is Runnable, AdsCampaignDataStructures {
     
+    //a funds structure for the vault
+    struct vaultFunds
+    {
+        uint unclaimed; // location axis - latitude 
+        uint claimed; // location axos - longitude
+    }
+
     //Describes the address and balances that were uncalimed and saved as vaults
-    mapping(address => uint) public uncalimedFundsVault;
+    mapping(address => vaultFunds) public unclaimedFundsVault;
     
     //Describes the address and balances for publishers with approved claims
     mapping(address => uint) public publishersApprovedClaims;
@@ -67,13 +74,13 @@ contract AdsCampaignFundable is Runnable, AdsCampaignDataStructures {
         var campaignKey = keccak256(msg.sender,id);
        
         //Handle re enterance attack
-        var tempBalance = campaigns[campaignKey].balance;
-        campaigns[campaignKey].balance =0;
-        
-        require(msg.sender.send(tempBalance));
+        var amountToSend = campaigns[campaignKey].balance - campaigns[campaignKey].withDrawn;
+        campaigns[campaignKey].withDrawn += amountToSend;
+                
+        require(msg.sender.send(amountToSend));
         
         //log
-        LogRefundCampagin(msg.sender,id,tempBalance);
+        LogRefundCampagin(msg.sender,id,amountToSend);
         
         return true;
     }
@@ -93,7 +100,7 @@ contract AdsCampaignFundable is Runnable, AdsCampaignDataStructures {
         var tempBalance = campaigns[campaignKey].balance;
         campaigns[campaignKey].balance =0;
         
-        uncalimedFundsVault[reciever] += tempBalance;
+        unclaimedFundsVault[reciever].unclaimed += tempBalance;
         
         //log
         LogMoveFundsToVault(reciever,id, tempBalance);
@@ -108,18 +115,19 @@ contract AdsCampaignFundable is Runnable, AdsCampaignDataStructures {
     public
     returns (bool)
     {
+        uint amount = unclaimedFundsVault[msg.sender].unclaimed - unclaimedFundsVault[msg.sender].claimed;
+
         //check for funds
-        require(uncalimedFundsVault[msg.sender] > 0);
+        require(amount > 0);
         
         //Handle re enterance attack
-        var tempBalance = uncalimedFundsVault[msg.sender];
-        uncalimedFundsVault[msg.sender] =0;
+        unclaimedFundsVault[msg.sender].claimed += amount;
         
         //send funds
-        require(msg.sender.send(tempBalance));
+        require(msg.sender.send(amount));
         
         //log
-        LogCalimFromVault(msg.sender,tempBalance);
+        LogCalimFromVault(msg.sender,amount);
         
         return true;
         

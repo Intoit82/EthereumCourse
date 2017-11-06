@@ -17,6 +17,7 @@ contract AdsCampaignDataStructures
         bool isActive; //flag that indicates whether the comapaign is active
         bytes32 contentLink; //holds the content link for the comapaign (will be delivered to the publisher from the blockchain)
         uint balance; //balance of locked tokens
+        uint withDrawn; //balance of withDrawn tokens
     }
     
     //Describes the campaigns which exist at any given time

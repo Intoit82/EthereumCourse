@@ -45,18 +45,15 @@ createCampaign() {
             const event0 = txObject.logs[0];
             console.log(event0.args.advertiser + " has created a new campaign at " + event0.args.campaignAddress);
 
-		   
-             
-
-           var campaignAddr = event0.args.campaignAddress;
-          //  return adsCampaign.at(campaignAddr,{from:this.advertiserAddr})
-     /* })
+            var campaignAddr = event0.args.campaignAddress;
+            return this.adsCampaignCon.at(campaignAddr,{from:this.advertiserAddr})
+      })
         .then(instance => {
         	var adsCampaignInstance = instance;
 
-        	//this.adsCampaignInstance = instance;
-        	 console.log("saving ads campaign instance") */
-        })
+        	this.adsCampaignInstance = instance;
+        	 console.log("saving ads campaign instance") 
+        }) 
 }
 
 uploadViews() {
@@ -85,8 +82,7 @@ instantiateContract(){
     const contract = require('truffle-contract')
     const adsHub = contract(adsHubContract)
     const adsCampaign = contract(adsCampaignContract)
-    adsCampaign.setProvider(this.state.web3.currentProvider)
-    
+    adsCampaign.setProvider(this.state.web3.currentProvider)   
     adsHub.setProvider(this.state.web3.currentProvider)
     
 
@@ -98,8 +94,10 @@ instantiateContract(){
         adsHub.deployed().then((instance) => {
         adsHubInstance = instance
 
+        this.adsCampaignCon = adsCampaign
+        console.log("adsCampaignCon: ", this.adsCampaignCon);
         this.adsHubInstance = instance
-        this.ownerAddr = accounts[0]
+        this.ownerAddr = accounts[0];
         this.advertiserAddr = accounts[1];
         this.publisherAddr = accounts[2];
         this.trusteeAddr = accounts[3];
