@@ -2,6 +2,7 @@ pragma solidity ^0.4.8;
 
 import "./TrustedViews.sol";
 import "./AdsCampaignFundable.sol";
+import "./SafeMath.sol";
 
 //Describes a bidding system within the blockchain between advertisers and publisher per location.
 contract AdsCampaign is AdsCampaignFundable, TrustedViews {
@@ -103,7 +104,7 @@ contract AdsCampaign is AdsCampaignFundable, TrustedViews {
         newCampaign.latitude = setLatitude;
         newCampaign.longitude = setLongitude;
         newCampaign.viewDuration = setViewDuration;
-        newCampaign.offerDuration = now + setOfferDuration; //add the offer durtion for the current time
+        newCampaign.offerDuration = SafeMath.add(now, setOfferDuration); //add the offer durtion for the current time
         newCampaign.pricePerAd = pricePerAd;
         newCampaign.isActive = true;
         newCampaign.contentLink = contentLink;
@@ -134,7 +135,7 @@ contract AdsCampaign is AdsCampaignFundable, TrustedViews {
         
         //update the campaign
         campaigns[campaignKey].viewDuration = newViewDuration;
-        campaigns[campaignKey].offerDuration = now + newOfferDuration; //add the offer durtion for the current time;
+        campaigns[campaignKey].offerDuration = SafeMath.add(now, newOfferDuration); //add the offer durtion for the current time;
         campaigns[campaignKey].pricePerAd = pricePerAd;
         
         //log the update
@@ -206,7 +207,7 @@ contract AdsCampaign is AdsCampaignFundable, TrustedViews {
         require(views[key].minViewDuration >= campaigns[campaignId].viewDuration); //check views are with standrads defined by the campaign
         
         
-        var tokenAmount = viewNumberTemp * campaigns[campaignId].pricePerAd;
+        var tokenAmount = SafeMath.mul(viewNumberTemp , campaigns[campaignId].pricePerAd);
         
         //Set approved amount
         if (tokenAmount > campaignBalance)
@@ -216,10 +217,10 @@ contract AdsCampaign is AdsCampaignFundable, TrustedViews {
         }
         
         //set the balance
-        campaigns[campaignId].balance -= tokenAmount;
+        campaigns[campaignId].balance = SafeMath.sub(campaigns[campaignId].balance, tokenAmount);
         
         //add the claimed tokens
-        publishersApprovedClaims[publisherAddress] += tokenAmount;
+        publishersApprovedClaims[publisherAddress] = SafeMath.add(publishersApprovedClaims[publisherAddress],tokenAmount);
         
         //log
         LogApprovedClaim(publisherAddress,this,tokenAmount);

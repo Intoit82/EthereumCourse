@@ -2,6 +2,7 @@ pragma solidity ^0.4.8;
 
 import "./Runnable.sol";
 import "./AdsCampaignDataStructures.sol";
+import "./SafeMath.sol";
 
 //Todo handle gas? implement settles
 
@@ -55,7 +56,7 @@ contract AdsCampaignFundable is Runnable, AdsCampaignDataStructures {
        
        //update the balance
        var campaignKey = keccak256(msg.sender,id);
-       campaigns[campaignKey].balance += msg.value;
+       campaigns[campaignKey].balance = SafeMath.add(campaigns[campaignKey].balance,msg.value);
        
        //log
        LogFundCampagin(msg.sender,id,msg.value);
@@ -74,8 +75,8 @@ contract AdsCampaignFundable is Runnable, AdsCampaignDataStructures {
         var campaignKey = keccak256(msg.sender,id);
        
         //Handle re enterance attack
-        var amountToSend = campaigns[campaignKey].balance - campaigns[campaignKey].withDrawn;
-        campaigns[campaignKey].withDrawn += amountToSend;
+        var amountToSend = SafeMath.sub(campaigns[campaignKey].balance, campaigns[campaignKey].withDrawn);
+        campaigns[campaignKey].withDrawn = SafeMath.add(campaigns[campaignKey].withDrawn, amountToSend);
                 
         require(msg.sender.send(amountToSend));
         
@@ -100,7 +101,7 @@ contract AdsCampaignFundable is Runnable, AdsCampaignDataStructures {
         var tempBalance = campaigns[campaignKey].balance;
         campaigns[campaignKey].balance =0;
         
-        unclaimedFundsVault[reciever].unclaimed += tempBalance;
+        unclaimedFundsVault[reciever].unclaimed = SafeMath.add(unclaimedFundsVault[reciever].unclaimed,tempBalance);
         
         //log
         LogMoveFundsToVault(reciever,id, tempBalance);
@@ -115,13 +116,13 @@ contract AdsCampaignFundable is Runnable, AdsCampaignDataStructures {
     public
     returns (bool)
     {
-        uint amount = unclaimedFundsVault[msg.sender].unclaimed - unclaimedFundsVault[msg.sender].claimed;
+        uint amount = SafeMath.sub(unclaimedFundsVault[msg.sender].unclaimed, unclaimedFundsVault[msg.sender].claimed);
 
         //check for funds
         require(amount > 0);
         
         //Handle re enterance attack
-        unclaimedFundsVault[msg.sender].claimed += amount;
+        unclaimedFundsVault[msg.sender].claimed = SafeMath.add(unclaimedFundsVault[msg.sender].claimed , amount);
         
         //send funds
         require(msg.sender.send(amount));
