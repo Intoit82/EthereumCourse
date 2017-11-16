@@ -1,29 +1,12 @@
 pragma solidity ^0.4.13;
 
-import "./interfaces/OwnedI.sol";
-
-contract Owned is OwnedI {
-    //holds the owner address
-    address internal owner;
-
-      /**
+contract OwnedI {
+    /**
      * Event emitted when a new owner has been set.
      * @param previousOwner The previous owner, who happened to effect the change.
      * @param newOwner The new, and current, owner the contract.
      */
     event LogOwnerSet(address indexed previousOwner, address indexed newOwner);
-
-    function Owned()
-    public
-    {
-        owner = msg.sender;
-    }
-
-    modifier fromOwner()
-    {
-        require(msg.sender == owner);
-        _;
-    }
 
     /**
      * Sets the new owner for this contract.
@@ -34,32 +17,12 @@ contract Owned is OwnedI {
      * @return Whether the action was successful.
      * Emits LogOwnerSet.
      */
-    function setOwner(address newOwner)
-    fromOwner
-    public
-    returns(bool success)
-    {
-        require(owner != newOwner);
-        require(newOwner != address(0));
-        address previousOwner = owner;
-
-        owner = newOwner;
-        LogOwnerSet(previousOwner,owner);
-
-        return true;
-    }
+    function setOwner(address newOwner) returns(bool success);
 
     /**
      * @return The owner of this contract.
      */
-    function getOwner()
-    constant
-    public
-    returns(address _owner)
-    {
-        _owner = owner;
-        
-    }
+    function getOwner() constant returns(address owner);
 
     /*
      * You need to create:
