@@ -1,0 +1,59 @@
+General description
+====================
+Location based smart contracts for Advertisers and Publishers
+
+
+Location based Ads system - description
+=========================
+
+Roles
+======
+Advertiser – any party whom wish to advertise a campaign
+Publisher – any party whom wish to deliver the ads campaign to the end user
+Trustee – any party whom wish to verify the legitimacy of the ads viewed by the end users
+
+Hub contract (AdsHub.sol)
+=========================
+The system will allow the deployment of a Hub contract which can facilitate exchange of information and funds between publishers and advertisers.
+
+The Hub will be created by the manager of the system which will implement a web base platform that provides portal for each party:
+1.	Advertiser Portal – will allow registration, facilitate the bids between different advertisers and UI communication channel with the smart contracts.
+2.	Publisher Portal – will allow registration, Best match Bid taking and UI communication channel with the smart contract.
+3.	Trustee Portal – will allow registration and a channel for uploading verified views from the end user interface. 
+
+Ads Campaign (AdsCampaign.sol)
+============================
+The Ads campaign will allow the advertiser to create campaign using the following characteristics:
+1.	Campaign Id
+2.	Location of the campaign
+3.	Minimum duration required for each view to count as a legit view
+4.	Duration of the campaign in the blockchain (how long it is active and open for publisher interactions)
+5.	Content of the views ( will be handled using IPFS keys)
+Once created the Advertiser should fund the campaign which allows the publishers to interact with the campaign and provide the views.
+At the end of the campaign duration the advertiser is allowed to refund the remaining funds from the contract.
+Any viewer can interact with the contract to see what the status of each campaign is.
+
+Trustee
+=======
+Once a campaign is created and taken by one or more publishers the end users app will report with the view information for each user.
+The trustee will verify the legitimacy of the information and will aggregate the views information. Every 100K (or any other large enough number) the trustee will be allowed to upload the information to the blockchain.
+
+Publisher
+========
+The publisher can claim the views that were uploaded by the trustee. Once claimed and approve the publisher can withdraw the funds from the campaign contract.
+
+Hub owner
+=========
+The owner should provide the web platform, exchange platform and registration process for the entire system (all outside the blockchain).
+The owner of the hub can also lock unclaimed funds of any ad campaign contract that is not active in a vault. The relevant party then can request to claim the locked funds.
+The owner can act with a safety features like pausing the interaction.
+
+Unit Tests
+=========
+CreateAdsCampaign – a complete valid flow of the process
+RunnableTest – test for pausing funcitionality
+Premissions – test for some of the permissions for some of the functions. 
+
+UI - React
+======
+BlockChainApp – allow interaction with the Ads hub and Ads Campaign with UI components based on React
