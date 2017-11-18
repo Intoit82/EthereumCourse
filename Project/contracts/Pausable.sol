@@ -29,7 +29,7 @@ contract Pausable is Owned, PausableI {
     public
     {
         paused = isPaused;
-        LogPausedSet(msg.sender,paused);
+       // LogPausedSet(msg.sender,paused);
     }
 
     /**

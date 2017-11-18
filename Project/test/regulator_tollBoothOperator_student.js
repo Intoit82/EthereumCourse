@@ -59,8 +59,8 @@ contract('Regulator, Toll Booth Operator', function(accounts) {
                 .then(operator => assert.isTrue(isAddress(operator)))
                 .then(() => regulator.createNewOperator(owner1, deposit0, { from: owner0 }))
                 .then(tx => {
-                    //assert.strictEqual(tx.receipt.logs.length, 2);
-                    //assert.strictEqual(tx.logs.length, 2);
+                    assert.strictEqual(tx.receipt.logs.length, 2);
+                    assert.strictEqual(tx.logs.length, 2);
                     const logCreated = tx.logs[1];
                     assert.strictEqual(logCreated.event, "LogTollBoothOperatorCreated");
                     assert.strictEqual(logCreated.args.sender, owner0);

@@ -2,7 +2,6 @@
 <html>
 <head>
   <base href="." />
-  
   <title>Road Toll Project</title>
 
   <!-- Latest compiled and minified bootstrap CSS -->
@@ -29,16 +28,16 @@
 <body ng-cloak ng-controller="TollRoadController">  
 
 <div align="center">
-<span style="color: black">Regualtor Portal</span> |
-<a href="operator.html">Operator Portal</a> |
+<a href="index.html">Regulator Portal</a> |
+<span style="color: black">Operator Portal</span> |
 <a href="vehicle.html">Vehicle Portal</a> |
 <a href="toolBooth.html">Toll Booth Portal</a>
 </div> 
 <br/>
 
 <div align="center">
- <h1> <span class="black"> <b>Regulator Portal </b></span></h1>   
- <h6><span style="color: #777;">(Regulator address: {{account}})</span>
+ <h1> <span class="black"> <b>Operator Portal </b></span></h1>   
+ <h6><span style="color: #777;">(Operator address: {{account}})</span>
  </h6>
  </div> 
 
@@ -46,7 +45,7 @@
     <div class="row">
       <div class="col-md-12">
     
-       <h5>Selceted Account</h5>
+        <h5>Selceted Account</h5>
          <form id="accountForm" ng-submit="setAccount()">
                   &nbsp;
                   <select name="account" ng-model="accountSelected" required>

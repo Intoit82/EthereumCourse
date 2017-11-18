@@ -1,3 +1,9 @@
+# UI steps
+1. copy modules from rob example
+2. add operator.html to CopyWebpackPlugin in webpack.config.js
+
+
+
 # Step 2
 
 ## Intro

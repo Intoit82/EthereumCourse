@@ -11,6 +11,18 @@ module.exports = {
     // Copy our app's index.html to the build folder.
     new CopyWebpackPlugin([
       { from: './app/index.html', to: "index.html" }
+      
+
+    ]),
+     // Copy our app's operator.html to the build folder.
+    new CopyWebpackPlugin([
+      { from: './app/operator.html', to: "operator.html" }
+      
+
+    ]),
+
+     new CopyWebpackPlugin([
+      { from: './app/stylesheets/app.css', to: "app.css" }
     ])
   ],
   module: {
@@ -32,9 +44,5 @@ module.exports = {
         }
       }
     ]
-  },
-  devServer: {
-    host: '0.0.0.0',
-    port: 8000
   }
 }

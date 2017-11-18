@@ -20,7 +20,7 @@ contract Regulated is RegulatedI {
     {
         require(initRegulator != address(0));
         regulator = initRegulator;
-        LogRegulatorSet(address(0),regulator);
+       // LogRegulatorSet(address(0),regulator);
     }
 
     /**

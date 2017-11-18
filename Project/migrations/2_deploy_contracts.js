@@ -1,23 +1,26 @@
 var Regulator = artifacts.require("./Regulator.sol");
 var OperatorBooth = artifacts.require("./TollBoothOperator.sol");
 
+/*
 module.exports = function(deployer) {
   deployer.deploy(Regulator);
 };
-
+*/
 
 module.exports = function(deployer,network,accounts) {
   let regulator,operator;
   let regulatotAddress = accounts[0];
   let operatorAddress = accounts[1];
-  Regulator.deployed()
 
-  .then(result => {
-  	regulator = result;
-  	//console.log(regulator.address + " vs " + regulatotAddress);
-  	return regulator.createNewOperator(operatorAddress,100,{from:regulatotAddress})
+  deployer.deploy(Regulator);
+  return Regulator.deployed()
+  .then(instance => {
+
+  regulator = instance;
+    console.log(regulator.address + " vs " + regulatotAddress);
+    return regulator.createNewOperator(operatorAddress,100,{from:regulatotAddress})  
   })
-  
+      
   .then(txObject => {
   const event0 = txObject.logs[1];
   console.log(event0.args.sender + " has created a new toll booth at " + event0.args.newOperator);

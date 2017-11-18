@@ -18,7 +18,7 @@ contract DepositHolder is Owned, DepositHolderI {
     {
         require(initialDeposit > 0);
         deposit = initialDeposit;
-        LogDepositSet(msg.sender,deposit);
+        //LogDepositSet(msg.sender,deposit);
     }
 
     /**
