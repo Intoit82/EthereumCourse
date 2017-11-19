@@ -1,5 +1,5 @@
 const Web3 = require("web3");
-const Promise = require("bluebird");
+//const Promise = require("bluebird");
 const truffleContract = require("truffle-contract");
 const $ = require("jquery");
 // Not to forget our built contract
@@ -19,34 +19,36 @@ if (typeof web3 !== 'undefined') {
   window.web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545')); 
 }
 
-Promise.promisifyAll(web3.eth, { suffix: "Promise"});
-Promise.promisifyAll(web3.version, { suffix: "Promise"});
+//Promise.promisifyAll(web3.eth, { suffix: "Promise"});
+//Promise.promisifyAll(web3.version, { suffix: "Promise"});
 
 const Regulator = truffleContract(RegulatorJson);
 Regulator.setProvider(web3.currentProvider);
 
-//const Campaign = truffleContract(CampaignJson);
-//Campaign.setProvider(web3.currentProvider);
+const TollBoothOperator = truffleContract(TollBoothOperatorJson);
+TollBoothOperator.setProvider(web3.currentProvider);
 
 var app = angular.module('TollRoadApp', []);
 
-app.config(function( $locationProvider) {
+/*app.config(function( $locationProvider) {
   $locationProvider.html5Mode({
     enabled: true,
     requireBase: false
   });
-});
+});*/
 
 app.controller("TollRoadController", 
   [ '$scope', '$location', '$http', '$q', '$window', '$timeout', 
   function($scope, $location, $http, $q, $window, $timeout) {
 
   var regulator;
+  var globalOperator;
   Regulator.deployed().then(function(instance) {
     regulator = instance;
     console.log("is regulator deployed: " +regulator);
     newVehicleTypeWatcher = watchForNewVehicleTypes();
     newOperatorWatcher = watchForOperators();
+    
     $scope.currVehicleType = "not defined"; //reset displayed type
 
     
@@ -61,6 +63,10 @@ app.controller("TollRoadController",
   $scope.newOperatorLog= []; //array for operator logs
   $scope.operators= []; //array of operators
   $scope.operatorsIndex= {}; //pointers for the operators
+
+  $scope.newBoothLog= []; //array for operator logs
+  $scope.booths = [];
+  $scope.boothsIndex= {}; //index for booths
 
   $scope.setNewOperator = function () {
     console.log("Enter New Operator with " ,$scope.depositInWei ," deposit as default");
@@ -112,10 +118,31 @@ app.controller("TollRoadController",
       })
           
   }
- 
+  
+  function updateBoothLog()  {
+    console.log("enter update log");
+    return TollBoothOperator.at($scope.operator,{from:$scope.operatorOwner})
+    .then(instance=> {
+      var operator = instance;
+      operator.LogTollBoothAdded( {}, {fromBlock:0})
+      .watch(function(err,newBooth) {
+        if(err) 
+        {
+        console.error("new Booth Error:",err);
+        return;
+        }
+      
+        if(typeof(txn[newBooth.transactionHash])=='undefined')
+      {
+        $scope.newBoothLog.push(newBooth);         
+        txn[newBooth.transactionHash]=true;
+        upsertBooths(newBooth.args.sender,newBooth.args.tollBooth);
+      }
+    })
+    })
+  } 
 
   function watchForOperators() {
-    console.log("enter watcher");
     regulator.LogTollBoothOperatorCreated( {}, {fromBlock: 0})
     .watch(function(err,newOperator) {
       if(err) 
@@ -163,10 +190,35 @@ app.controller("TollRoadController",
     })
   };
 
+  function upsertBooths(addressSender,addressBooth)
+  {
+    var b = {};
+    b.sender  = addressSender;
+    b.booth   = addressBooth;
+
+    console.log("entering updsert booth with " , addressBooth);
+    
+    if(typeof($scope.boothsIndex[addressBooth]) != 'undefined')
+    {
+      console.log("booth already in index");
+      return;
+    }
+
+     //set new scope    
+    $scope.boothsIndex[addressBooth]=$scope.booths.length;
+    $scope.booths.push(b);
+    $scope.numOfBooths = $scope.booths.length;
+
+
+    console.log("New booth was set");
+    $scope.$apply();
+
+  }
+
   function upsertOperators(addressOperator,addressOwner,deposit) {
-    console.log("Upserting operator: ", addressOperator);
-    console.log("Upserting operator: ", addressOwner);
-    console.log("Upserting operator: ", deposit);
+    console.log("Upserting operator address: ", addressOperator);
+    console.log("Upserting operator owner: ", addressOwner);
+    console.log("Upserting operator deposit: ", deposit);
     
     var o = {};
     o.operator  = addressOperator;
@@ -231,19 +283,53 @@ app.controller("TollRoadController",
         $scope.currVehicleType = "not defined";
   }
 
-   $scope.setAccount = function() {
-    //$scope.account = $scope.accountSelected;
-    $scope.balance = web3.eth.getBalance($scope.account).toString(10);
+  $scope.setOperator = function() {
+     $scope.operator = $scope.operatorInSelect.operator;
+     $scope.operatorOwner = $scope.operatorInSelect.owner;
+     $scope.operatorBalance = web3.eth.getBalance($scope.operatorOwner).toString(10);
+     updateBoothLog();
+    }
+//0x799eac6ac1d61de771119751334ad217ef5e171b
+  $scope.addTollBooth = function() {
+      if(typeof($scope.operator) == 'undefined')
+      {
+        alert('Must select operator first');
+        return;
+      }
+
+    if(typeof($scope.boothsIndex[$scope.tollBoothAddress]) != 'undefined')
+    {
+      alert('Booth address already exist');
+      return;
+    }
+
+    console.log("enter add function with address ", $scope.operator  );
+    return TollBoothOperator.at($scope.operator,{from:$scope.operatorOwner})
+    .then(instance=> {
+      console.log("enter instance function = ", instance);
+      var booth = instance;
+      return booth.addTollBooth($scope.tollBoothAddress,{from:$scope.operatorOwner})
+    })
     
+    .then(tx=>{
+     console.log("adding new Booth succesfully")
+     const log = tx.logs[0];
+     console.log("New Booth owner: " +log.args.sender);
+     console.log("New Booth address: " +log.args.tollBooth);   
+     updateBoothLog();
+     //upsertBooths($scope.operatorOwner,log.args.tollBooth);
+    })
+
+  }
+
+  $scope.setAccount = function() {
+    
+    $scope.accountSelected = $scope.accountInSelect;
+    $scope.balance = web3.eth.getBalance($scope.accountSelected).toString(10);
+
     //set vehicle type
     setCurrentVehicleType();
-    
-   /* var countCampaigns = $scope.campaigns.length;
-    // the "User Contributed" col needs a new context, so refresh them
-    for(i=0; i<countCampaigns; i++) {
-      upsertCampaign($scope.campaigns[i].campaign);
-    }*/
-
+  
     console.log('Using account for action',$scope.accountSelected);
     
   }
@@ -263,248 +349,70 @@ app.controller("TollRoadController",
     $scope.accountSelected = $scope.accounts[1]; //select 1 as default      
     console.log('Using account for action',$scope.accountSelected);
     console.log('Using regulator account',$scope.account);
+
+    $scope.$apply();
   });
+
+
+////////////////// Rounte Price /////////////////////
+    $scope.setRoutePrice = function() {
+        if(typeof($scope.operator) == 'undefined')
+      {
+        alert('Must select operator first');
+        return;
+      }
+      //console.log("enter add function with address ", $scope.operator  );
+      return TollBoothOperator.at($scope.operator,{from:$scope.operatorOwner})
+     .then(instance=> {
+       console.log("enter instance function = ", instance);
+       var booth = instance;
+        return booth.setRoutePrice($scope.setEntryBooth,$scope.setExitBooth,$scope.priceInWei,{from:$scope.operatorOwner})
+     })
+    
+     .then(tx=>{
+     console.log("adding new Price route succesfully");
+     const log = tx.logs[0];
+     console.log("Route owner: " +log.args.sender);
+     console.log("Route entry booth: " +log.args.entryBooth);
+     console.log("Route exit booth: " +log.args.exitBooth);
+     console.log("Route price: " +log.args.priceWeis);
+     })
+
+     $scope.currentRoute = log.args.priceWeis;
+
+    }
+
+
+    ////////////////// Multipliers Price /////////////////////
+    $scope.setMultiplier = function() {
+      if(typeof($scope.operator) == 'undefined')
+      {
+        alert('Must select operator first');
+        return;
+      }
+      console.log("enter Multipliers"  );
+      return TollBoothOperator.at($scope.operator,{from:$scope.operatorOwner})
+     .then(instance=> {
+       console.log("enter instance function = ", instance);
+       var booth = instance;
+        return booth.setMultiplier($scope.setTypeValue,$scope.seMulValue,{from:$scope.operatorOwner})
+     })
+    
+     .then(tx=>{
+     console.log("Setting Multipliers succesfully");
+     const log = tx.logs[0];
+     console.log("Multipliers type: " +log.args.vehicleType);
+     console.log("Multipliers value: " +log.args.multiplier);
+     
+     })
+
+     $scope.multiplierOfType = log.args.vehicleType;
+
+    }
+
+    
 
 }]);
 
 
-   // Check contributions from the current user
-
-/*
-  txn = {};                // workaround for repetitive event emission (testRPC)
-  $scope.campaigns=[];     // array of structs
-  $scope.campaignIndex={}; // row pointers
-  $scope.campaignLog=[];   // verbose on-screen display of happenings
-  $scope.new = {};         // new campaign
-  $scope.campaignSelected; // campaign selector
-  $scope.contribution;     // contribution field
-
-  // INTERACTIONS
-
-  // select account
-
-  $scope.setAccount = function() {
-    $scope.account = $scope.accountSelected;
-    $scope.balance = web3.eth.getBalance($scope.account).toString(10);
-    var countCampaigns = $scope.campaigns.length;
-    // the "User Contributed" col needs a new context, so refresh them
-    for(i=0; i<countCampaigns; i++) {
-      upsertCampaign($scope.campaigns[i].campaign);
-    }
-    console.log('Using account',$scope.account);
-  }
-
-  // new campaign
-
-  $scope.newCampaign = function() {
-    if(parseInt($scope.new.goal) > 0 && parseInt($scope.new.duration) > 0) {
-      hub.createCampaign($scope.new.duration, $scope.new.goal, {from: $scope.account, gas: 4000000})
-      .then(function(txn) {
-        $scope.new.goal = "";
-        $scope.new.duration = "";
-      });
-    } else {
-      alert('Integers over Zero, please');
-    }
-  }
-
-  // contribute to campaign
-
-  $scope.contribute = function() {
-    if($scope.campaignSelected=="") return;
-    if(parseInt($scope.contribution)<=0) return;
-    var campaign = Campaign.at($scope.campaignSelected);
-    var amount = $scope.contribution;
-    $scope.contribution = "";
-    campaign.contribute({from: $scope.account, value: parseInt(amount), gas: 4000000})
-    .then(function(txn) {
-      return;
-    });
-  }
-
-  // claim a refund
-
-  $scope.refund = function(campaign) {
-    var campaign = Campaign.at(campaign);
-    return campaign.requestRefund({from: $scope.account, gas: 4000000})
-    .then(function(txn) {
-      // an event will arrive
-    });
-  }
-
-  // DISPLAY
-
-  // watch hub campaigns created. UI starts here.
-
-  function watchForNewCampaigns() {
-    hub.LogNewCampaign( {}, {fromBlock: 0})
-    .watch(function(err,newCampaign) {
-      if(err) 
-      {
-        console.error("Campaign Error:",err);
-      } else {
-        // normalizing data for output purposes
-        console.log("New Campaign", newCampaign);
-        newCampaign.args.user   = newCampaign.args.sponsor;
-        newCampaign.args.amount = newCampaign.args.goal.toString(10);     
-        // only if non-repetitive (testRPC)
-        if(typeof(txn[newCampaign.transactionHash])=='undefined')
-        {
-          $scope.campaignLog.push(newCampaign);         
-          txn[newCampaign.transactionHash]=true;
-          upsertCampaign(newCampaign.args.campaign);
-        }
-      }
-    })
-  };
-
-  // watch functions for each campaign we know about
-
-  // watch receipts
-
-  function watchReceived(address) {
-    var campaign = Campaign.at(address);
-    var watcher = campaign.LogContribution( {}, {fromBlock: 0})
-    .watch(function(err,received) {
-      if(err)
-      {
-        console.error('Received Error', address, err);
-      } else {
-        console.log("Contribution", received);
-        if(typeof(txn[received.transactionHash+'rec'])=='undefined')
-        {
-          received.args.user = received.args.sender;
-          received.args.amount = parseInt(received.args.amount);
-          received.args.campaign = address;
-          $scope.campaignLog.push(received);
-          upsertCampaign(address);
-          txn[received.transactionHash+'rec']=true;
-        }
-      }
-    });
-  }
-
-  // watch refunds
-
-  function watchRefunded(address) {
-    var campaign = Campaign.at(address);
-    var watcher = campaign.LogRefundSent( {}, {fromBlock: 0})
-    .watch(function(err,refunded) {
-      if(err)
-      {
-        console.error('Refunded Error', address, err);
-      } else {
-        console.log("Refund", refunded);
-        if(typeof(txn[refunded.transactionHash+'ref'])=='undefined')
-        {
-          refunded.args.user = refunded.args.funder;
-          refunded.args.amount = parseInt(refunded.args.amount);
-          refunded.args.campaign = address;
-          $scope.campaignLog.push(refunded);
-          upsertCampaign(address);
-          txn[refunded.transactionHash+'ref']=true;
-        }
-      }
-    });
-  }
-
-  // update display (row) and instantiate campaign watchers
-  // safe to call for newly discovered and existing campaigns that may have changed in some way
-
-  function upsertCampaign(address) {
-    console.log("Upserting campaign", address);
-    var campaign = Campaign.at(address);
-    // console.log("Campaign", campaign);
-    var campaignDeadline;
-    var campaignGoal;
-    var campaignFundsRaised;
-    var campaignIsSuccess;
-    var campaignHasFailed;
-
-    return campaign.deadline.call({from: $scope.account})
-    .then(function(_deadline) {
-      campaignDeadline = _deadline;
-      //console.log("Deadline", campaignDeadline);
-      return campaign.goal.call({from: $scope.account});
-    })
-    .then(function(_goal) {
-      campaignGoal = _goal;
-      //console.log("Goal", campaignGoal);
-      return campaign.fundsRaised.call({from: $scope.account});
-    })
-    .then(function(_fundsRaised) {
-      campaignFundsRaised = _fundsRaised;
-      //console.log("Funds Raised", campaignFundsRaised);
-      return campaign.withdrawn.call({from: $scope.account});
-    })
-    .then(function(_withdrawn) {
-      campaignWithdrawn = _withdrawn;
-      //console.log("Withdrawn", _withdrawn);
-      return campaign.sponsor.call({from: $scope.account});
-    })
-    .then(function(_sponsor) {
-      campaignSponsor = _sponsor;
-      //console.log("Sponsor", campaignSponsor);
-      return campaign.isSuccess.call({from: $scope.account});
-    })
-    .then(function(_isSuccess) {
-      campaignIsSuccess = _isSuccess;
-      //console.log("is Success", campaignIsSuccess);
-      return campaign.hasFailed.call({from: $scope.account});
-    })
-    .then(function(_hasFailed) {
-      campaignHasFailed = _hasFailed;
-      //console.log("has Failed", campaignHasFailed);
-
-      // build a row step-by-step
-
-      var c = {};
-      c.campaign  = address;
-      c.sponsor   = campaignSponsor;
-      c.goal      = campaignGoal.toString(10);
-      c.deadline  = parseInt(campaignDeadline.toString(10));
-      c.accepted  = parseInt(campaignFundsRaised.toString(10));
-      c.withdrawn = parseInt(campaignWithdrawn.toString(10));
-      c.isSuccess = campaignIsSuccess;
-      c.hasFailed = campaignHasFailed;
-      c.status = "open";
-      if(c.isSuccess) c.status = "success";
-      if(c.hasFailed) c.status = "failed";
-
-      if(typeof($scope.campaignIndex[address]) == 'undefined')
-        {
-          $scope.campaignIndex[c.campaign]=$scope.campaigns.length;
-          $scope.campaigns.push(c);
-          var receiveWatcher = watchReceived(address);
-          var refundWatcher  = watchRefunded(address);
-          $scope.$apply();
-        } else {
-          var index = $scope.campaignIndex[c.campaign];
-          $scope.campaigns[index].accepted  = c.accepted;
-          $scope.campaigns[index].refunded  = c.refunded;
-          $scope.campaigns[index].withdrawn = c.withdrawn;
-          $scope.campaigns[index].isSuccess = c.isSuccess;
-          $scope.campaigns[index].hasFailed = c.hasFailed;
-          $scope.$apply();
-        }
-      return getFunder(address);
-    });
-  }
-
-   // Check contributions from the current user
-
-  function getFunder(address) {
-    var campaign = Campaign.at(address);
-    var index = $scope.campaignIndex[address];
-    return campaign.funderStructs.call($scope.account, {from: $scope.account})
-    .then(function(funder) {
-      // when a function returns multiple values, we get an array
-      $scope.campaigns[index].userAccepted = parseInt(funder[0].toString(10));
-      $scope.campaigns[index].userRefunded = parseInt(funder[1].toString(10));
-      $scope.$apply();
-      return true;;
-    })
-  }
-
-  // work with the first account.
-*/
+  

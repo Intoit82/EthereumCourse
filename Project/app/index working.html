@@ -5,25 +5,21 @@
   
   <title>Road Toll Project</title>
 
-   <!-- JQuery -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
- 
   <!-- Latest compiled and minified bootstrap CSS -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 
   <!-- Optional bootstrap theme -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
-
+  <!-- JQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 
   <!-- Latest compiled and minified bootstrap JavaScript -->
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
-  <link href="./app.css" rel='stylesheet' type='text/css'>
- 
-  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular.min.js"></script>
+ <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js"></script> 
 
-  
+  <link href="./app.css" rel='stylesheet' type='text/css'>
 
   <!-- app controller -->
   <script src="./app.js"></script>
@@ -32,6 +28,14 @@
 </head>
 
 <body ng-cloak ng-controller="TollRoadController">  
+
+<div align="center">
+<nav>
+  <ul>
+    <li><a href="operator.html">Operator</a></li>
+  </ul>
+</nav>
+</div> 
 
 <div align="center">
 <span style="color: black">Regualtor Portal</span> |
@@ -51,18 +55,18 @@
     <div class="row">
       <div class="col-md-12">
     
-       <h5>Selected Account</h5>
+       <h5>Selceted Account</h5>
          <form id="accountForm" ng-submit="setAccount()">
                   &nbsp;
-                  <select name="account"  ng-model="accountInSelect" required>
+                  <select name="account" ng-model="accountSelected" required>
                     <option ng-repeat="account in accounts" value="{{ account }}">
                     {{ account }}
                     </option>
                   </select>
                   <input type="submit" class="btn btn-primary addnew" value="Select Account For Action">
           </form>  
-          <h6>(account selected: {{ accountSelected }})</h6>
-          <h6>(selected account Balance (wei): {{ balance }}) <span style="color: #777;"></span></h6>
+          <h6>(account selected: {{ account }})</h6>
+          <h6>Selected account Balance (wei): {{ balance }} <span style="color: #777;"></span></h6>
         
                 
         <div style="color:#0000FF">
@@ -126,8 +130,6 @@
       angular.bootstrap(document, ['TollRoadApp'])
     });
   </script>
-
-
 
 </body>
 

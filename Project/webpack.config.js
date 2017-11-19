@@ -1,8 +1,22 @@
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+//var CommonsChunkPlugin = webpack.optimize.CommonsChunkPlugin;
+/*
+entry: './app/javascripts/app.js',
+    entry: {
+    first: './app/javascripts/app.js',
+    second: '.app/javascripts/appOperator.js'
+  },*/
 
 module.exports = {
+
   entry: './app/javascripts/app.js',
+  output: {
+    path: path.resolve(__dirname, 'build'),
+    filename: 'app.js'
+  },
+
+
   output: {
     path: path.resolve(__dirname, 'build'),
     filename: 'app.js'
