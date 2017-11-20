@@ -34,6 +34,24 @@ module.exports = {
       
 
     ]),
+     // Copy our app's operator.html to the build folder.
+    new CopyWebpackPlugin([
+      { from: './app/vehicle.html', to: "vehicle.html" }
+      
+
+    ]),
+     // Copy our app's operator.html to the build folder.
+    new CopyWebpackPlugin([
+      { from: './app/javascripts/appBooth.js', to: "appBooth.js" }
+      
+
+    ]),
+     // Copy our app's operator.html to the build folder.
+    new CopyWebpackPlugin([
+      { from: './app/toolBooth.html', to: "toolBooth.html" }
+      
+
+    ]),
 
      new CopyWebpackPlugin([
       { from: './app/stylesheets/app.css', to: "app.css" }

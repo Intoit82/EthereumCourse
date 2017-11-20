@@ -68,6 +68,11 @@ app.controller("TollRoadController",
   $scope.booths = [];
   $scope.boothsIndex= {}; //index for booths
 
+  $scope.newEntryLog= []; //array for operator logs
+  $scope.entries = [];
+  $scope.entriesIndex= {}; //index for booths
+
+
   $scope.setNewOperator = function () {
     console.log("Enter New Operator with " ,$scope.depositInWei ," deposit as default");
     console.log("Account selected: " , $scope.accountSelected);
@@ -139,7 +144,7 @@ app.controller("TollRoadController",
         upsertBooths(newBooth.args.sender,newBooth.args.tollBooth);
       }
     })
-    })
+   })
   } 
 
   function watchForOperators() {
@@ -376,9 +381,9 @@ app.controller("TollRoadController",
      console.log("Route entry booth: " +log.args.entryBooth);
      console.log("Route exit booth: " +log.args.exitBooth);
      console.log("Route price: " +log.args.priceWeis);
+     $scope.currentRoute = log.args.priceWeis.toString(10);
+     $scope.$apply();
      })
-
-     $scope.currentRoute = log.args.priceWeis;
 
     }
 
@@ -394,8 +399,8 @@ app.controller("TollRoadController",
       return TollBoothOperator.at($scope.operator,{from:$scope.operatorOwner})
      .then(instance=> {
        console.log("enter instance function = ", instance);
-       var booth = instance;
-        return booth.setMultiplier($scope.setTypeValue,$scope.seMulValue,{from:$scope.operatorOwner})
+       var currentOperator = instance;
+       return currentOperator.setMultiplier($scope.setTypeValue,$scope.setMulValue,{from:$scope.operatorOwner})
      })
     
      .then(tx=>{
@@ -403,14 +408,256 @@ app.controller("TollRoadController",
      const log = tx.logs[0];
      console.log("Multipliers type: " +log.args.vehicleType);
      console.log("Multipliers value: " +log.args.multiplier);
-     
+     $scope.multiplierOfType = log.args.vehicleType.toString(10);
+     $scope.$apply();
+
      })
+   }
 
-     $scope.multiplierOfType = log.args.vehicleType;
 
+
+     $scope.enterRoad = function () {
+      
+      var currentOperator;
+      var vehiceMul;
+
+      console.log(regulator.address);
+      
+
+       if (typeof($scope.vehicleSelected) == 'undefined' ||
+        parseInt($scope.vehicleBalance) <=0  )
+       {
+        alert('please select a vehicle with a positive balance ')
+        throw new Error("Vehicle is invalid");
+       }
+
+        if (typeof($scope.operator) == 'undefined' )
+       {
+        alert('please select road operator related to your booth ')
+        throw new Error("No operator");
+       }
+
+      return TollBoothOperator.at($scope.operator,{from:$scope.vehicleSelected})
+     .then(instance=> {
+       console.log("Checking if booth is registered ", $scope.vehicleEntryBooth);
+       currentOperator = instance; //set operator
+
+      return currentOperator.isTollBooth($scope.vehicleEntryBooth,{from:$scope.vehicleSelected})
+    })
+      .then(isIndeed =>{
+        console.log("Toll booth registeraion status: ", isIndeed);
+       if(!isIndeed)
+       {
+        alert('Entry Booth is not registered - please use registered booths only');
+        throw new Error("Entry booth is not registered");
+       }
+
+       return currentOperator.isPaused({from:$scope.vehicleSelected})
+     })
+      .then(isPaused=> {
+        console.log("is operator paused :",isPaused);
+        if(isPaused)
+        {
+          alert('Operator is paused, please unpause it');
+          throw new Error("operator is paused");
+        }
+  
+      return regulator.getVehicleType($scope.vehicleSelected)
+    })
+      .then(typeRes => {
+        console.log("vehicleType is: ", typeRes.toString(10));
+        if(typeRes ==0)
+        {
+          alert('No vehicle type was found for the given vehicle adress, Please select a valid vehicle address');
+          throw new Error("Vehicle type 0");
+        }
+
+      return currentOperator.getMultiplier(typeRes,{from:$scope.vehicleSelected})
+    })
+    .then(mul => {
+
+      console.log("Multipier defined is: ", mul.toString(10));
+      vehiceMul = mul;
+      if(mul ==0)
+        {
+          alert('No Multiplier defined for the vehicle type plse set a mulitplier with the regulator or choose another vehicle address');
+          throw new Error("Multiplier for type is 0");
+        }
+
+      return currentOperator.getDeposit({from:$scope.vehicleSelected})
+    })
+    .then(amount => {
+
+      var totalDepositRequired = vehiceMul * amount;
+      console.log("Amount of ", amount.toString(10), " with total deposit requirement of ", totalDepositRequired);
+      console.log("Current vehicle deposit: ", $scope.vehicleEntryDeposit);
+
+      if(totalDepositRequired > $scope.vehicleEntryDeposit)
+      {
+        alert("Deposit of " + $scope.vehicleEntryDeposit + " is not sufficient for total base fee of " + totalDepositRequired);
+        throw new Error("insufficient deposit");
+      }
+
+      console.log("input vehicle: ", $scope.vehicleSelected);
+      console.log("input entryBooth: ", $scope.vehicleEntryBooth);
+      console.log("input exitSecretHashed: ", $scope.vehicleEntryHash);
+      console.log("input deposit: ", $scope.vehicleEntryDeposit);
+
+      return currentOperator.enterRoad.call($scope.vehicleEntryBooth,
+        $scope.vehicleEntryHash,
+        {from:$scope.vehicleSelected,
+         value:$scope.vehicleEntryDeposit,
+         gas:3000000})
+    })
+    .then(success =>{
+
+      console.log("Call success status is ", success);
+
+      return currentOperator.enterRoad($scope.vehicleEntryBooth,
+        $scope.vehicleEntryHash,
+        {from:$scope.vehicleSelected,
+         value:$scope.vehicleEntryDeposit,
+         gas:3000000})
+
+     })
+    
+     .then(tx=>{
+     console.log("Enter road succesfully");
+     const log = tx.logs[0];
+     console.log("Enter vehicle: " +log.args.vehicle);
+     console.log("Enter entry booth: " +log.args.entryBooth);
+     console.log("Enter hash: " +log.args.exitSecretHashed);
+     console.log("Enter deposits: " +log.args.depositedWeis);
+     
+     updateEntryLog();//update logs
+     })
+     .catch(error =>{
+      console.log("error: ", error);
+     })
+   }
+
+   function updateEntryLog()  {
+    console.log("enter vehicle entry log update");
+    return TollBoothOperator.at($scope.operator,{from:$scope.operatorOwner})
+    .then(instance=> {
+      var operator = instance;
+      operator.LogRoadEntered( {}, {fromBlock:0})
+      .watch(function(err,newEntry) {
+        if(err) 
+        {
+        console.error("new entry Error:",err);
+        return;
+        }
+      
+        if(typeof(txn[newEntry.transactionHash])=='undefined')
+      {
+        $scope.newEntryLog.push(newEntry);         
+        txn[newEntry.transactionHash]=true;
+        upsertEntries(newEntry.args.vehicle,newEntry.args.entryBooth,
+                      newEntry.args.exitSecretHashed,newEntry.args.depositedWeis);
+      }
+    })
+   })
+  }
+
+  function upsertEntries(addressVehicle,addressBooth,hash,deposit)
+  {
+    var e = {};
+    e.vehicle  = addressVehicle;
+    e.entryBooth   = addressBooth;
+    e.exitSecretHashed = hash;
+    e.depositedWeis = deposit;
+
+    console.log("entering updsert entry");
+    
+    if(typeof($scope.entriesIndex[addressVehicle]) != 'undefined')
+    {
+      console.log("entry already in index");
+      return;
     }
 
+     //set new scope    
+    $scope.entriesIndex[addressVehicle]=$scope.entries.length;
+    $scope.entries.push(e);
+    $scope.numOfEntries = $scope.entries.length;
+
+
+    console.log("New Entry was set");
+    $scope.$apply();
+
+  } 
+
     
+
+    
+
+  $scope.selectVehicle = function() {
+  $scope.vehicleSelected = $scope.inSelectionVehicle;
+  $scope.vehicleBalance = web3.eth.getBalance($scope.vehicleSelected).toString(10);
+  updateEntryLog();//update log
+
+
+  }
+    
+//////////////////////////////  Toll Both /////////////////
+$scope.selectBooth = function()
+{
+  $scope.boothSelected = $scope.inSelectionBooth;
+  
+}
+
+function updateOperatorInstance() {
+
+  if (typeof($scope.operator) == 'undefined' )
+       {
+        alert('please select road operator related to your booth ')
+        throw new Error("No operator");
+       }
+
+  if(typeof($scope.operatorInstance) != 'undefined')
+    return operatorInstance;
+  
+  return TollBoothOperator.at($scope.operator,{from:$scope.accounts[0]})
+  .then(instance=> {
+    $scope.operatorInstance = instance;
+      
+    })
+  }
+
+  
+
+
+$scope.exitRoad = function ()
+{
+   console.log("enter vehicle exit function");
+   var opertorInstance;
+
+   return TollBoothOperator.at($scope.operator,{from:$scope.accounts[0]})
+  .then(instance=> {
+    opertorInstance = instance;
+    return opertorInstance.isTollBooth($scope.boothSelected,{from:$scope.boothSelected}) 
+  })
+   .then(isIndeed =>{
+    console.log("Exit booth registration state ", isIndeed);
+     if(!isIndeed)
+       {
+        alert('Exit Booth is not registered - please use registered booths only');
+        throw new Error("Exit booth is not registered");
+       }
+
+    return opertorInstance.reportExitRoad($scope.exitHash,{from:$scope.boothSelected})  
+   }) 
+    .then(tx=>{
+     console.log("Exit road succesfully");
+     const log = tx.logs[0];
+     console.log("Event Name: " +log.event);
+     console.log("Exit booth: " +log.args.exitBooth);
+     console.log("Exit hash: " +log.args.exitSecretHashed);
+     console.log("Enter refund Weis: " +log.args.refundWeis);
+     console.log("Enter final Fee: " +log.args.finalFee);
+   })
+         
+}
 
 }]);
 
