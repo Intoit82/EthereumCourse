@@ -62,7 +62,7 @@
       
        <br/>
        
-       <h4>Selceted Booth</h4>
+       <h4>Selceted Exit Booth</h4>
        
          <form id="selectBoothForm" ng-submit="selectBooth()">
               &nbsp;
@@ -88,25 +88,11 @@
         
         <br/>
         <br/>
-        <h4> Payment information for vehicle</h4>
-        <h6> (Require selection of both toll Booth and vehicle)</h6>
-        <table class="table table-striped table-bordered">
-          <tr>
-            <th>Event</th>
-            <th>Vehicle Address</th>
-            <th>Entry Booth Address</th>
-            <th>Hash</th>
-            <th>Deposit</th>
-          </tr>
-          <tr ng-repeat="addEntryInfo in newEntryLog">
-            <td>{{ addEntryInfo.event }}</td>
-            <td>{{ addEntryInfo.args.vehicle }}</td>
-            <td>{{ addEntryInfo.args.entryBooth }}</td>
-            <td>{{ addEntryInfo.args.exitSecretHashed }}</td>
-            <td>{{ addEntryInfo.args.depositedWeis }}</td>
-          </tr>
-        </table>
-
+        <div ng-init="paymentStatus='None'">
+        <h4>  Payment Status: {{paymentStatus}}</h4>
+        </div>
+      
+                
       </div>
    </div>
   </div>

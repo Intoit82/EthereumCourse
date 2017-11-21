@@ -59,6 +59,14 @@
           <h6>(selected operator Balance (wei): {{ operatorBalance }}) <span style="color: #777;"></span></h6>
         
         <br/>
+
+        <h4>Unpause Operator</h4>
+        <form id="unpauseForm"  ng-submit="unpauseOperator()">
+              &nbsp;
+          <input type="submit" ng-disable="!pausedOperator" class="btn btn-primary addnew" value="Unpause Operator" >
+          <h6>Current operator pause state: {{pausedOperator}}</h6>
+        </form>
+
         <br/>
         <div style="color:#0000FF">
         <h4>Toll Booths</h4>

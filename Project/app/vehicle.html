@@ -64,7 +64,7 @@
          <form id="selectVehicleForm" ng-submit="selectVehicle()">
               &nbsp;
 
-          <input type="text" name="inSelectionVehicle"     ng-model="inSelectionVehicle"     placeholder="Enter Vehicle Address" size="10" required />
+          <input type="text" name="inSelectionVehicle"     ng-model="inSelectionVehicle"     placeholder="Enter the Vehicle Address" size="10" required />
           <input type="submit" class="btn btn-primary addnew" value="Select Vehicle">
         </form>
           <h6>(vehicle selected: {{ vehicleSelected }})</h6>
@@ -82,7 +82,8 @@
           
           <input type="text" name="vehicleEntryBooth"     ng-model="vehicleEntryBooth"     placeholder="Enter the entry booth address" size="10" required />
           
-          <input type="text" name="vehicleEntryHash"     ng-model="vehicleEntryHash"     placeholder="Enter hashed secret for exit payment charge" size="10" required />
+          <input type="text" name="vehicleEntryHash"     ng-model="vehicleEntryHash"     placeholder="Enter clear secret for exit payment charge" size="10" required />
+          <h6>Hashed value:  {{secretHash}} </h6>
           <input type="text" name="vehicleEntryDeposit"     ng-model="vehicleEntryDeposit"     placeholder="Enter the entry deposit in wei" size="10" required />
           <input type="submit" class="btn btn-primary addnew" value="Enter Road and make a deposit">
         </form>
