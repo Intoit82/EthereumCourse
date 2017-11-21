@@ -288,13 +288,64 @@ app.controller("TollRoadController",
         $scope.currVehicleType = "not defined";
   }
 
+  /////////////////////////////// Operator ///////////
+
+   $scope.unpauseOperator = function() {
+    console.log("Enter unpause function");
+    if(typeof($scope.pausedOperator) == 'undefined')
+    {
+      alert('Paused state is not defined');
+      console.log("No paused state");
+      return;
+    }
+
+    if(!$scope.pausedOperator)
+    {
+      alert('Paused state is alreay unpaused');
+      console.log("Paused state is already unpaused");
+      return;
+    }
+       
+    return TollBoothOperator.at($scope.operator,{from:$scope.operatorOwner})
+    .then(instance=> {
+    currentOperator = instance;
+    return currentOperator.setPaused(false,{from:$scope.operatorOwner})
+     })
+    .then(tx =>{
+    return currentOperator.isPaused({from:$scope.operatorOwner})
+     })
+    .then(isPaused=> {
+      $scope.pausedOperator = isPaused;
+      $scope.$apply();
+      if(!isPaused)
+        console.log("Unpaused successfully");
+      
+      else
+        console.log("Unable to unpause operator");
+    })
+
+   }
+
   $scope.setOperator = function() {
      $scope.operator = $scope.operatorInSelect.operator;
      $scope.operatorOwner = $scope.operatorInSelect.owner;
      $scope.operatorBalance = web3.eth.getBalance($scope.operatorOwner).toString(10);
-     updateBoothLog();
-    }
-//0x799eac6ac1d61de771119751334ad217ef5e171b
+
+    return TollBoothOperator.at($scope.operator,{from:$scope.operatorOwner})
+    .then(instance=> {
+      currentOperator = instance;
+    return currentOperator.isPaused({from:$scope.operatorOwner})
+     })
+    .then(isPaused=> {
+      $scope.pausedOperator = isPaused;
+      //$scope.$apply();
+      console.log("is operator paused :",isPaused);
+      updateBoothLog();
+
+    })
+  }
+
+
   $scope.addTollBooth = function() {
       if(typeof($scope.operator) == 'undefined')
       {
@@ -421,6 +472,7 @@ app.controller("TollRoadController",
       var currentOperator;
       var vehiceMul;
 
+
       console.log(regulator.address);
       
 
@@ -498,13 +550,18 @@ app.controller("TollRoadController",
         throw new Error("insufficient deposit");
       }
 
+      return currentOperator.hashSecret($scope.vehicleEntryHash,{from:$scope.vehicleSelected})
+    })
+    .then(hashed => {
+      $scope.secretHash = hashed;
+      $scope.$apply();
       console.log("input vehicle: ", $scope.vehicleSelected);
       console.log("input entryBooth: ", $scope.vehicleEntryBooth);
-      console.log("input exitSecretHashed: ", $scope.vehicleEntryHash);
+      console.log("input exitSecretHashed: ", $scope.secretHash);
       console.log("input deposit: ", $scope.vehicleEntryDeposit);
 
       return currentOperator.enterRoad.call($scope.vehicleEntryBooth,
-        $scope.vehicleEntryHash,
+        $scope.secretHash,
         {from:$scope.vehicleSelected,
          value:$scope.vehicleEntryDeposit,
          gas:3000000})
@@ -514,7 +571,7 @@ app.controller("TollRoadController",
       console.log("Call success status is ", success);
 
       return currentOperator.enterRoad($scope.vehicleEntryBooth,
-        $scope.vehicleEntryHash,
+        $scope.secretHash,
         {from:$scope.vehicleSelected,
          value:$scope.vehicleEntryDeposit,
          gas:3000000})
@@ -632,6 +689,13 @@ $scope.exitRoad = function ()
    console.log("enter vehicle exit function");
    var opertorInstance;
 
+
+   if(typeof($scope.boothSelected) == 'undefined')
+   {
+    alert("No booth was selected, please select a valid booth");
+    return;
+   }
+
    return TollBoothOperator.at($scope.operator,{from:$scope.accounts[0]})
   .then(instance=> {
     opertorInstance = instance;
@@ -645,16 +709,37 @@ $scope.exitRoad = function ()
         throw new Error("Exit booth is not registered");
        }
 
-    return opertorInstance.reportExitRoad($scope.exitHash,{from:$scope.boothSelected})  
+    return opertorInstance.reportExitRoad($scope.exitHash,{from:$scope.boothSelected,gas:3000000})  
    }) 
     .then(tx=>{
      console.log("Exit road succesfully");
      const log = tx.logs[0];
+
      console.log("Event Name: " +log.event);
      console.log("Exit booth: " +log.args.exitBooth);
      console.log("Exit hash: " +log.args.exitSecretHashed);
      console.log("Enter refund Weis: " +log.args.refundWeis);
      console.log("Enter final Fee: " +log.args.finalFee);
+
+     //init to not defined
+     $scope.paymentStatus = "None";
+     
+
+     if(log.event == "LogRoadExited")
+     {
+        $scope.paymentStatus = " Payment was made for a fee of "+
+        log.args.finalFee.toString(10) + " wei and with a refund of " +
+        log.args.refundWeis.toString(10) + " wei";
+     }
+
+     if(log.event == "LogPendingPayment")
+      $scope.paymentStatus = " payment is pending with entry booth: " +
+      log.args.entryBooth + "and exit booth: " +
+      log.args.exitBooth + " and secret hash: " +
+      log.args.exitSecretHashed;
+
+
+      $scope.$apply();
    })
          
 }

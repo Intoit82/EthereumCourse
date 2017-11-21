@@ -1,15 +1,11 @@
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-//var CommonsChunkPlugin = webpack.optimize.CommonsChunkPlugin;
-/*
-entry: './app/javascripts/app.js',
-    entry: {
-    first: './app/javascripts/app.js',
-    second: '.app/javascripts/appOperator.js'
-  },*/
+var glob = require('glob');
 
 module.exports = {
 
+  
+ 
   entry: './app/javascripts/app.js',
   output: {
     path: path.resolve(__dirname, 'build'),
@@ -17,10 +13,6 @@ module.exports = {
   },
 
 
-  output: {
-    path: path.resolve(__dirname, 'build'),
-    filename: 'app.js'
-  },
   plugins: [
     // Copy our app's index.html to the build folder.
     new CopyWebpackPlugin([
@@ -40,12 +32,7 @@ module.exports = {
       
 
     ]),
-     // Copy our app's operator.html to the build folder.
-    new CopyWebpackPlugin([
-      { from: './app/javascripts/appBooth.js', to: "appBooth.js" }
-      
-
-    ]),
+       
      // Copy our app's operator.html to the build folder.
     new CopyWebpackPlugin([
       { from: './app/toolBooth.html', to: "toolBooth.html" }
@@ -78,3 +65,4 @@ module.exports = {
     ]
   }
 }
+
