@@ -7,9 +7,10 @@ Many issues like - huge app.js file are a matter of learning it for the first ti
 
 Installation notes
 -------------------
-1. create a truffle init webpack on a newFolder
-2. Copy node_modules from the newFolder to the nir81-code folder
-3. run sudo npm install web3@0.20.1 truffle-contract bluebird jquery webpack --save
+1. Run sudo npm install (not working on Win10 host machines in share folder)
+2. run truffle migrate --reset
+3. run testrpc
+4. run npm run dev
 
 Run the UI
 -------------
